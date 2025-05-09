@@ -1,0 +1,30 @@
+INSERT INTO genres (id, genre_name, description, parent_genre_id) VALUES
+                                                                      (1, 'Action', 'Action games', NULL),
+                                                                      (2, 'Adventure', 'Adventure games', NULL),
+                                                                      (3, 'RPG', 'Role-playing games', NULL),
+                                                                      (4, 'Shooter', 'Shooter games', NULL),
+                                                                      (5, 'Puzzle', 'Puzzle games', NULL),
+                                                                      (6, 'Strategy', 'Strategy games', NULL),
+                                                                      (7, 'Sports', 'Sports games', NULL),
+                                                                      (8, 'Fighting', 'Fighting games', NULL),
+                                                                      (9, 'Racing', 'Racing games', NULL),
+                                                                      (10, 'Simulation', 'Simulation games', NULL),
+                                                                      (11, 'Horror', 'Horror games', NULL),
+                                                                      (12, 'Platformer', 'Platformer games', NULL),
+                                                                      (13, 'MMO', 'Massively Multiplayer Online', NULL),
+                                                                      (14, 'Arcade', 'Arcade games', NULL),
+                                                                      (15, 'Casual', 'Casual games', NULL),
+                                                                      (16, 'Stealth', 'Stealth games', NULL),
+                                                                      (17, 'Survival', 'Survival games', NULL),
+                                                                      (18, 'Music', 'Music games', NULL),
+                                                                      (19, 'Farming', 'Farming games', NULL),
+                                                                      (20, 'Cosmic Fantasy', 'Space adventures with magic', NULL);
+
+INSERT INTO genres (id, genre_name, description, parent_genre_id) VALUES
+                                                                      (21, 'FPS', 'First-person shooter', 4),
+                                                                      (22, 'Third-person Shooter', 'Third-person shooter', 4),
+                                                                      (23, 'MMORPG', 'Massive multiplayer online role-playing game', 13),
+                                                                      (24, 'Platform', 'Platform-based games', 12),
+                                                                      (25, 'Tactical Shooter', 'Shooter games focused on tactics', 4),
+                                                                      (26, 'RPG - Open World', 'Open-world RPG', 3),
+                                                                      (27, 'Sports Simulation', 'Sports simulation games', 7);

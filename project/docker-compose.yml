@@ -1,0 +1,19 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:17.1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1984
+      POSTGRES_DB: playgame_store
+    ports:
+      - 5432:5432
+
+  serve:
+    image: play_game
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    environment:
+      DATABASE: db
