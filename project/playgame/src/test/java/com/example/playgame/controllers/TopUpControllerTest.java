@@ -1,8 +1,10 @@
 package com.example.playgame.controllers;
 
 import com.example.playgame.dto.topUp.TopUpResponseDto;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.TopUpService;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +20,12 @@ import static org.mockito.Mockito.*;
 public class TopUpControllerTest {
     @Mock
     private TopUpService topUpService;
+
+    @Mock
+    private AuthService authService;
+
+    @Mock
+    private UserDetails userDetails;
 
     @InjectMocks
     private TopUpController topUpController;
@@ -52,19 +60,19 @@ public class TopUpControllerTest {
 
     @Test
     public void testDeposit_Success() {
-        topUpController.deposit(1L, BigDecimal.valueOf(100));
-
+        when(userDetails.getUsername()).thenReturn("user");
+        when(authService.getAccountIdByLogin("user")).thenReturn(1L);
+        topUpController.deposit(userDetails, BigDecimal.valueOf(100));
         verify(topUpService, times(1)).deposit(1L, BigDecimal.valueOf(100));
     }
 
     @Test
     public void testTransferFunds_Success() {
-        Long senderAccountId = 1L;
+        when(userDetails.getUsername()).thenReturn("user");
+        when(authService.getAccountIdByLogin("user")).thenReturn(1L);
         Long receiverAccountId = 2L;
         BigDecimal amount = BigDecimal.valueOf(50);
-
-        topUpController.transferFunds(senderAccountId, receiverAccountId, amount);
-
-        verify(topUpService, times(1)).transferFunds(senderAccountId, receiverAccountId, amount);
+        topUpController.transferFunds(userDetails, receiverAccountId, amount);
+        verify(topUpService, times(1)).transferFunds(1L, receiverAccountId, amount);
     }
 }

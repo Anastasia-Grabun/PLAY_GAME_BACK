@@ -10,6 +10,7 @@ import com.example.playgame.repository.BucketRepository;
 import com.example.playgame.repository.GameRepository;
 import com.example.playgame.repository.GenreRepository;
 import com.example.playgame.repository.PurchaseRepository;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.FavouriteGenreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class FavouriteGenresServiceImpl implements FavouriteGenreService {
     private final GameRepository gameRepository;
     private final GenreRepository genreRepository;
     private final BucketRepository bucketRepository;
+    private final AuthService authService;
 
     private static final BigDecimal RATING_THRESHOLD = BigDecimal.valueOf(3.5);
     private static final int MIN_GENRE_OCCURRENCES = 3;
@@ -59,9 +61,14 @@ public class FavouriteGenresServiceImpl implements FavouriteGenreService {
         favouriteGenreIds.forEach(genreId -> addToFavourites(accountId, genreId));
     }
 
+
     @Override
     @Transactional
-    public void addToFavouritesForNewAccount(Long accountId, List<Long> genreIds) {
+    public void addToFavourites(Long accountId, List<Long> genreIds) {
+        validateAndAddGenres(accountId, genreIds);
+    }
+
+    private void validateAndAddGenres(Long accountId, List<Long> genreIds) {
         if (genreIds.size() > 3) {
             throw new IllegalArgumentException("You can't add more than 3 favourite genres");
         }
@@ -92,7 +99,6 @@ public class FavouriteGenresServiceImpl implements FavouriteGenreService {
             }
         }
     }
-
 
     private List<Game> getWishlistGames(Long accountId) {
         Optional<Bucket> wishlist = bucketRepository

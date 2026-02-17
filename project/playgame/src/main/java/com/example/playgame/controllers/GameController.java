@@ -4,26 +4,28 @@ import com.example.playgame.dto.game.GameRequestDto;
 import com.example.playgame.dto.game.GameResponseDto;
 import com.example.playgame.dto.game.GameShortcutResponseDto;
 import com.example.playgame.dto.game.GameUpdateDto;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.GameService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
 import java.math.BigDecimal;
 import java.util.List;
 
+@Tag(name = "Games", description = "Управление играми: просмотр, создание, обновление, рейтинги")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/games")
 public class GameController {
+
     private final GameService gameService;
+    private final AuthService authService;
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
@@ -31,30 +33,36 @@ public class GameController {
         return gameService.getById(id);
     }
 
-    @PostMapping("/create")
+    @PostMapping
     @PreAuthorize("hasRole('DEVELOPER')")
-    public void createGame(@RequestBody GameRequestDto gameDto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createGame(@Valid @RequestBody GameRequestDto gameDto) {
         gameService.save(gameDto);
     }
 
-    @GetMapping("/all")
+    //убрать
+    @GetMapping
     @PreAuthorize("hasRole('USER')")
     public List<GameShortcutResponseDto> getAllGames(
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer limit
-    ) {
+            @RequestParam(defaultValue = "10") Integer limit) {
         return gameService.getAll(page, limit);
     }
 
+    //девелопер ток этой игры
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('DEVELOPER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGame(@PathVariable Long id) {
         gameService.deleteById(id);
     }
 
-    @PutMapping
+    //девелопер ток этой игры
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('DEVELOPER')")
-    public void updateGame(@RequestBody GameUpdateDto updatedGameDto) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateGame(@PathVariable Long id, @Valid @RequestBody GameUpdateDto updatedGameDto) {
+        updatedGameDto.setId(id);
         gameService.update(updatedGameDto);
     }
 
@@ -96,7 +104,7 @@ public class GameController {
     public List<GameShortcutResponseDto> getGamesByGenre(
             @PathVariable Long genreId,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer limit){
+            @RequestParam(defaultValue = "10") Integer limit) {
         return gameService.findGamesByGenre(genreId, page, limit);
     }
 
@@ -110,24 +118,14 @@ public class GameController {
         return gameService.findGamesInPriceRange(minPrice, maxPrice, page, limit);
     }
 
+    @PostMapping("/{gameId}/rating")
     @PreAuthorize("hasRole('USER')")
-    @PostMapping("/bucket/{bucketId}/game/{gameId}")
-    public void addGameToBucket(@PathVariable Long bucketId, @PathVariable Long gameId) {
-        gameService.addGameToBucket(bucketId, gameId);
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @DeleteMapping("/bucket/{bucketId}/game/{gameId}")
-    public void removeGameFromBucket(@PathVariable Long bucketId, @PathVariable Long gameId) {
-        gameService.removeGameFromBucket(bucketId, gameId);
-    }
-
-    @PostMapping("/add-rating")
-    @PreAuthorize("hasRole('USER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addRating(
-            @RequestParam Long gameId,
-            @RequestParam Long accountId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long gameId,
             @RequestParam BigDecimal rating) {
+        Long accountId = authService.getAccountIdByLogin(userDetails.getUsername());
         gameService.addRating(gameId, accountId, rating);
     }
 }

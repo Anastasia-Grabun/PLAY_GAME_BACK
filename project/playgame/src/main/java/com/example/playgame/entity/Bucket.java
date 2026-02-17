@@ -1,8 +1,26 @@
 package com.example.playgame.entity;
 
 import com.example.playgame.entity.enums.BucketType;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.Date;
 import java.util.List;
@@ -22,7 +40,8 @@ public class Bucket {
     @Column(name = "date_added")
     private Date dateAdded;
 
-    @Column(name = "type")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "type", columnDefinition = "bucket_type")
     @Enumerated(EnumType.STRING)
     private BucketType type;
 
@@ -37,4 +56,5 @@ public class Bucket {
             inverseJoinColumns = @JoinColumn(name = "game_id")
     )
     private List<Game> games;
+
 }

@@ -5,17 +5,12 @@ import com.example.playgame.dto.genre.GenreRequestDto;
 import com.example.playgame.dto.genre.GenreToGetResponseDto;
 import com.example.playgame.dto.genre.GenreUpdateDto;
 import com.example.playgame.service.GenreService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -30,13 +25,14 @@ public class GenreController {
         return genreService.getById(id);
     }
 
-    @PostMapping("/create")
+    @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('DEVELOPER')")
-    public void createGenre(@RequestBody GenreRequestDto genreDto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createGenre(@Valid @RequestBody GenreRequestDto genreDto) {
         genreService.save(genreDto);
     }
 
-    @GetMapping("/all")
+    @GetMapping
     @PreAuthorize("hasRole('USER')")
     public List<GenreToGetResponseDto> getAllGenres() {
         return genreService.getAll();
@@ -44,13 +40,16 @@ public class GenreController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGenre(@PathVariable Long id) {
         genreService.deleteById(id);
     }
 
-    @PutMapping("update")
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public void updateGenre(@RequestBody GenreUpdateDto updatedGenreDto) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateGenre(@PathVariable Long id, @Valid @RequestBody GenreUpdateDto updatedGenreDto) {
+        updatedGenreDto.setId(id);
         genreService.update(updatedGenreDto);
     }
 
@@ -72,4 +71,3 @@ public class GenreController {
         return genreService.findGamesByGenresSortedByRating(genreIds, limit, page);
     }
 }
-

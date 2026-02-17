@@ -1,6 +1,7 @@
 package com.example.playgame.controllers;
 
 import com.example.playgame.dto.purchase.PurchaseResponseDto;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.PurchaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,9 @@ import static org.mockito.Mockito.when;
 public class PurchaseControllerTest {
     @Mock
     private PurchaseService purchaseService;
+
+    @Mock
+    private AuthService authService;
 
     @InjectMocks
     private PurchaseController purchaseController;

@@ -2,25 +2,32 @@ package com.example.playgame.service;
 
 import com.example.playgame.dto.account.AccountRequestDto;
 import com.example.playgame.dto.account.AccountResponseDto;
-import com.example.playgame.dto.account.AccountShortcutResponseDto;
 import com.example.playgame.dto.account.AccountUpdateDto;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 public interface AccountService {
-    AccountResponseDto getById(Long id);
+    /** Текущий пользователь по логину (Credential.login = UserDetails.getUsername()). */
+    AccountResponseDto getByLogin(String login);
 
-    AccountResponseDto findByUsername(String username);
+    /** Просмотр любого аккаунта по ID — только для ADMIN. */
+    AccountResponseDto getById(Long id);
 
     void save(AccountRequestDto accountDto);
 
-    List<AccountShortcutResponseDto> getAll(int limit, int page);
+    /** Удаление своего аккаунта по логину. */
+    void deleteByLogin(String login);
 
+    /** Удаление аккаунта по ID — только для ADMIN. */
     void deleteById(Long id);
 
-    AccountResponseDto update(AccountUpdateDto accountDto);
+    /** Обновление профиля текущего пользователя (аккаунт ищется по логину). */
+    AccountResponseDto updateByLogin(String login, AccountUpdateDto accountDto);
 
+    /** Баланс текущего пользователя по логину. */
+    BigDecimal getBalanceByLogin(String login);
+
+    /** Баланс любого аккаунта по ID — только для ADMIN. */
     BigDecimal checkBalance(Long accountId);
 
     void updateBalance(Long accountId, BigDecimal newBalance);

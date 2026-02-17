@@ -4,13 +4,20 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   datasource:
-    url: jdbc:postgresql://${DATABASE:localhost}:5432/playgame_store
+    url: jdbc:postgresql://localhost:5432/playgame_store
     username: postgres
     password: 1984
-    driverClassName: org.postgresql.Driver
+    driver-class-name: org.postgresql.Driver
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+
 jwt:
   secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
 
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

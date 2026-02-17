@@ -10,7 +10,9 @@ public interface BucketService {
 
     void save(BucketRequestDto bucketDto);
 
-    BucketResponseDto getBucketByAccountId(Long id);
+    BucketResponseDto getWishlistByAccountId(Long accountId);
+
+    BucketResponseDto getBuylistByAccountId(Long accountId);
 
     void addGameToBucket(Long bucketId, Long gameId);
 

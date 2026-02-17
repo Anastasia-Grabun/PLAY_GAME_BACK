@@ -6,6 +6,7 @@ import com.example.playgame.entity.Game;
 import com.example.playgame.entity.Purchase;
 import com.example.playgame.entity.Transaction;
 import com.example.playgame.entity.enums.BucketType;
+import com.example.playgame.entity.enums.TransactionStatus;
 import com.example.playgame.exception.notfound.AccountNotFoundException;
 import com.example.playgame.exception.notfound.BucketNotFoundException;
 import com.example.playgame.exception.notfound.GameNotFoundException;
@@ -21,7 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,6 +34,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class BuyServiceTest {
+
     @Mock
     private PurchaseRepository purchaseRepository;
 
@@ -51,83 +53,88 @@ public class BuyServiceTest {
     @InjectMocks
     private BuyServiceImpl buyService;
 
-    private Account account;
+    private Account buyer;
+    private Account owner;
     private Bucket bucket;
     private Game game;
 
     @BeforeEach
     public void setUp() {
-        account = new Account();
-        account.setId(1L);
-        account.setBalance(BigDecimal.valueOf(100));
+        buyer = new Account();
+        buyer.setId(1L);
+        buyer.setBalance(BigDecimal.valueOf(100));
+
+        owner = new Account();
+        owner.setId(1L);
 
         game = new Game();
         game.setId(1L);
         game.setPrice(BigDecimal.valueOf(50));
 
         bucket = new Bucket();
-        bucket.setGames(Collections.singletonList(game));
+        bucket.setGames(List.of(game));
     }
 
     @Test
-    public void testPurchaseGames_Success() {
-        account.setBalance(BigDecimal.valueOf(100));
-
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
-        when(bucketRepository.findByAccountIdAndBucketType(1L, BucketType.BUYLIST.toString())).thenReturn(Optional.of(bucket));
+    public void shouldPurchaseGamesSuccessfully() {
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(buyer));
+        when(bucketRepository.findByAccountIdAndBucketType(1L, BucketType.BUYLIST.toString()))
+                .thenReturn(Optional.of(bucket));
         when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
-
-        Account owner = new Account();
-        owner.setId(2L);
-        owner.setBalance(BigDecimal.valueOf(100));
-        when(accountRepository.findById(2L)).thenReturn(Optional.of(owner));
-
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        buyService.purchaseGames(1L, 2L);
+        buyService.purchaseGames(String.valueOf(1L));
 
-        assertEquals(BigDecimal.valueOf(50), account.getBalance());
-
+        assertEquals(BigDecimal.valueOf(50), buyer.getBalance());
         verify(purchaseRepository, times(1)).save(any(Purchase.class));
-
         verify(bucketRepository, times(1)).save(bucket);
     }
 
     @Test
-    public void testPurchaseGames_InsufficientFunds() {
-        account.setBalance(BigDecimal.valueOf(30));
+    public void shouldNotPurchase_WhenInsufficientFunds() {
+        buyer.setBalance(BigDecimal.valueOf(10));
 
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
-        when(bucketRepository.findByAccountIdAndBucketType(1L, BucketType.BUYLIST.toString())).thenReturn(Optional.of(bucket));
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(buyer));
+        when(bucketRepository.findByAccountIdAndBucketType(1L, BucketType.BUYLIST.toString()))
+                .thenReturn(Optional.of(bucket));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
+            Transaction tx = invocation.getArgument(0);
+            tx.setStatus(TransactionStatus.FAILED);
+            return tx;
+        });
 
-        buyService.purchaseGames(1L, 2L);
+        buyService.purchaseGames(String.valueOf(1L));
 
-        assertEquals(BigDecimal.valueOf(30), account.getBalance());
+        assertEquals(BigDecimal.valueOf(10), buyer.getBalance());
         verify(purchaseRepository, never()).save(any(Purchase.class));
-        verify(bucketRepository, never()).save(bucket);
+        verify(bucketRepository, never()).save(any(Bucket.class));
     }
 
     @Test
-    public void testPurchaseGames_BucketNotFound() {
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
-        when(bucketRepository.findByAccountIdAndBucketType(1L, BucketType.BUYLIST.toString())).thenReturn(Optional.empty());
+    public void shouldThrowException_WhenBucketNotFound() {
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(buyer));
+        when(bucketRepository.findByAccountIdAndBucketType(1L, BucketType.BUYLIST.toString()))
+                .thenReturn(Optional.empty());
 
-        assertThrows(BucketNotFoundException.class, () -> buyService.purchaseGames(1L, 2L));
+        assertThrows(BucketNotFoundException.class, () -> buyService.purchaseGames(String.valueOf(1L)));
+
     }
 
     @Test
-    public void testPurchaseGames_GameNotFound() {
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
-        when(bucketRepository.findByAccountIdAndBucketType(1L, BucketType.BUYLIST.toString())).thenReturn(Optional.of(bucket));
+    public void shouldThrowException_WhenGameNotFound() {
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(buyer));
+        when(bucketRepository.findByAccountIdAndBucketType(1L, BucketType.BUYLIST.toString()))
+                .thenReturn(Optional.of(bucket));
         when(gameRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(GameNotFoundException.class, () -> buyService.purchaseGames(1L, 2L));
+        assertThrows(GameNotFoundException.class, () -> buyService.purchaseGames(String.valueOf(1L)));
+        ;
     }
 
     @Test
-    public void testPurchaseGames_AccountNotFound() {
+    public void shouldThrowException_WhenAccountNotFound() {
         when(accountRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(AccountNotFoundException.class, () -> buyService.purchaseGames(1L, 2L));
+        assertThrows(AccountNotFoundException.class, () -> buyService.purchaseGames(String.valueOf(1L)));
     }
 }

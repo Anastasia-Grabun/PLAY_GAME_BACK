@@ -103,23 +103,23 @@ class BucketServiceTest {
     }
 
     @Test
-    void testGetBucketByAccountId() {
-        when(bucketRepository.findBucketByAccount_Id(1L)).thenReturn(Optional.of(bucket));
+    void testGetWishlistByAccountId() {
+        when(bucketRepository.findByAccountIdAndBucketType(1L, "WISHLIST")).thenReturn(Optional.of(bucket));
         when(bucketDtoMapper.bucketToBucketResponseDto(bucket)).thenReturn(bucketResponseDto);
 
-        BucketResponseDto result = bucketService.getBucketByAccountId(1L);
+        BucketResponseDto result = bucketService.getWishlistByAccountId(1L);
 
         assertNotNull(result);
-        verify(bucketRepository, times(1)).findBucketByAccount_Id(1L);
+        verify(bucketRepository, times(1)).findByAccountIdAndBucketType(1L, "WISHLIST");
         verify(bucketDtoMapper, times(1)).bucketToBucketResponseDto(bucket);
     }
 
     @Test
-    void testGetBucketByAccountId_BucketNotFoundException() {
-        when(bucketRepository.findBucketByAccount_Id(1L)).thenReturn(Optional.empty());
+    void testGetWishlistByAccountId_BucketNotFoundException() {
+        when(bucketRepository.findByAccountIdAndBucketType(1L, "WISHLIST")).thenReturn(Optional.empty());
 
-        assertThrows(BucketNotFoundException.class, () -> bucketService.getBucketByAccountId(1L));
-        verify(bucketRepository, times(1)).findBucketByAccount_Id(1L);
+        assertThrows(BucketNotFoundException.class, () -> bucketService.getWishlistByAccountId(1L));
+        verify(bucketRepository, times(1)).findByAccountIdAndBucketType(1L, "WISHLIST");
     }
 
     @Test

@@ -77,7 +77,7 @@ public class GenreControllerTest {
 
     @Test
     public void testUpdateGenre_Success() {
-        genreController.updateGenre(genreUpdateDto);
+        genreController.updateGenre(1L, genreUpdateDto);
 
         verify(genreService, times(1)).update(genreUpdateDto);
     }

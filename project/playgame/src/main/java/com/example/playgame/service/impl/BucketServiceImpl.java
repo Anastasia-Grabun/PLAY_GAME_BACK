@@ -25,11 +25,8 @@ public class BucketServiceImpl implements BucketService {
 
     @Override
     public BucketResponseDto getById(Long id) {
-        if(!bucketRepository.existsById(id)){
-            throw new BucketNotFoundException(id);
-        }
-
-        Bucket bucket = bucketRepository.getById(id);
+        Bucket bucket = bucketRepository.findById(id)
+                .orElseThrow(() -> new BucketNotFoundException(id));
 
         return bucketDtoMapper.bucketToBucketResponseDto(bucket);
     }
@@ -45,10 +42,16 @@ public class BucketServiceImpl implements BucketService {
     }
 
     @Override
-    public BucketResponseDto getBucketByAccountId(Long id){
-        Bucket bucket = bucketRepository.findBucketByAccount_Id(id)
-                .orElseThrow(()-> new BucketNotFoundException(id));
+    public BucketResponseDto getWishlistByAccountId(Long accountId) {
+        Bucket bucket = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.WISHLIST.toString())
+                .orElseThrow(() -> new BucketNotFoundException(accountId));
+        return bucketDtoMapper.bucketToBucketResponseDto(bucket);
+    }
 
+    @Override
+    public BucketResponseDto getBuylistByAccountId(Long accountId) {
+        Bucket bucket = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.BUYLIST.toString())
+                .orElseThrow(() -> new BucketNotFoundException(accountId));
         return bucketDtoMapper.bucketToBucketResponseDto(bucket);
     }
 
@@ -80,9 +83,9 @@ public class BucketServiceImpl implements BucketService {
     @Override
     public void moveGamesToBuyList(Long accountId, List<Long> gameIds) {
         Bucket wishlist = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.WISHLIST.toString())
-                .orElseThrow(()-> new BucketNotFoundException("Bucket not found"));
+                .orElseThrow(() -> new BucketNotFoundException("Bucket not found"));
         Bucket buylist = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.BUYLIST.toString())
-                .orElseThrow(()-> new BucketNotFoundException("Bucket not found"));;
+                .orElseThrow(() -> new BucketNotFoundException("Bucket not found"));
 
         for (Long gameId : gameIds) {
             Game game = gameRepository.findById(gameId)

@@ -7,6 +7,7 @@ import com.example.playgame.entity.Purchase;
 import com.example.playgame.entity.Transaction;
 import com.example.playgame.entity.enums.BucketType;
 import com.example.playgame.entity.enums.TransactionStatus;
+import com.example.playgame.exception.InsufficientFundsException;
 import com.example.playgame.exception.notfound.AccountNotFoundException;
 import com.example.playgame.exception.notfound.BucketNotFoundException;
 import com.example.playgame.exception.notfound.GameNotFoundException;
@@ -15,6 +16,7 @@ import com.example.playgame.repository.BucketRepository;
 import com.example.playgame.repository.GameRepository;
 import com.example.playgame.repository.PurchaseRepository;
 import com.example.playgame.repository.TransactionRepository;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.BuyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class BuyServiceImpl implements BuyService {
+    private final AuthService authService;
     private final PurchaseRepository purchaseRepository;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
@@ -35,28 +38,27 @@ public class BuyServiceImpl implements BuyService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void purchaseGames(Long accountId, Long ownerId) {
+    public void purchaseGames(Long accountId) {
+
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(()-> new AccountNotFoundException(accountId));
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
 
         Bucket buylist = getBuylist(accountId);
-
         BigDecimal totalAmount = calculateTotalAmount(buylist);
 
         Transaction transaction = createTransaction(account, totalAmount);
 
         if (transaction.getStatus() == TransactionStatus.FAILED) {
-            return;
+            throw new InsufficientFundsException("Insufficient funds to complete the purchase.");
         }
 
         for (Game game : buylist.getGames()) {
-            gameRepository.findById(game.getId()).orElseThrow(() -> new GameNotFoundException(game.getId()));
+            gameRepository.findById(game.getId())
+                    .orElseThrow(() -> new GameNotFoundException(game.getId()));
         }
 
-        savePurchases(buylist.getGames(), ownerId, transaction);
-
+        savePurchases(buylist.getGames(), accountId, transaction); // accountId как owner
         clearBuylist(buylist);
-
         updateAccountBalance(account, totalAmount);
     }
 
@@ -97,16 +99,14 @@ public class BuyServiceImpl implements BuyService {
     }
 
     private void savePurchases(List<Game> games, Long ownerId, Transaction transaction) {
+        Account owner = accountRepository.findById(ownerId)
+                .orElseThrow(() -> new AccountNotFoundException(ownerId));
+
         for (Game game : games) {
             Purchase purchase = new Purchase();
-
-            Account owner = accountRepository.findById(ownerId)
-                    .orElseThrow(() -> new AccountNotFoundException(ownerId));
-
             purchase.setOwner(owner);
             purchase.setGame(game);
             purchase.setTransaction(transaction);
-
             purchaseRepository.save(purchase);
         }
     }

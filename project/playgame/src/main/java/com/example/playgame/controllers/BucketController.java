@@ -1,11 +1,20 @@
 package com.example.playgame.controllers;
 
 import com.example.playgame.dto.bucket.BucketResponseDto;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.BucketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
@@ -13,6 +22,7 @@ import java.util.List;
 @RequestMapping("/api/v1/buckets")
 public class BucketController {
     private final BucketService bucketService;
+    private final AuthService authService;
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
@@ -20,28 +30,38 @@ public class BucketController {
         return bucketService.getById(id);
     }
 
-    @GetMapping("/accounts/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public BucketResponseDto getBucketsByAccountId(@PathVariable Long id){
-        return bucketService.getBucketByAccountId(id);
+    @GetMapping("/me/wishlist")
+    @PreAuthorize("hasRole('USER')")
+    public BucketResponseDto getMyWishlist(@AuthenticationPrincipal UserDetails userDetails) {
+        Long accountId = authService.getAccountIdByLogin(userDetails.getUsername());
+        return bucketService.getWishlistByAccountId(accountId);
+    }
+
+    @GetMapping("/me/buylist")
+    @PreAuthorize("hasRole('USER')")
+    public BucketResponseDto getMyBuylist(@AuthenticationPrincipal UserDetails userDetails) {
+        Long accountId = authService.getAccountIdByLogin(userDetails.getUsername());
+        return bucketService.getBuylistByAccountId(accountId);
     }
 
     @PreAuthorize("hasRole('USER')")
-    @PostMapping("/bucket/{bucketId}/game/{gameId}")
-    public void addGameToBucket(@PathVariable Long bucketId, @PathVariable Long gameId){
+    @PostMapping("/{bucketId}/games/{gameId}")
+    public void addGameToBucket(@PathVariable Long bucketId, @PathVariable Long gameId) {
         bucketService.addGameToBucket(bucketId, gameId);
     }
 
     @PreAuthorize("hasRole('USER')")
-    @DeleteMapping("/bucket/{bucketId}/game/{gameId}")
-    public void removeGameFromBucket(@PathVariable Long bucketId, @PathVariable Long gameId){
+    @DeleteMapping("/{bucketId}/games/{gameId}")
+    public void removeGameFromBucket(@PathVariable Long bucketId, @PathVariable Long gameId) {
         bucketService.removeGameFromBucket(bucketId, gameId);
     }
 
     @PreAuthorize("hasRole('USER')")
-    @PutMapping("/accounts/{accountId}/games/move-to-buylist")
-    public void moveGamesToBuyList(@PathVariable Long accountId, @RequestBody List<Long> gameIds) {
+    @PutMapping("/me/move-to-buylist")
+    public void moveGamesToBuyList(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody List<Long> gameIds) {
+        Long accountId = authService.getAccountIdByLogin(userDetails.getUsername());
         bucketService.moveGamesToBuyList(accountId, gameIds);
     }
 }
-
