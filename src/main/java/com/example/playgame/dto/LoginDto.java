@@ -15,6 +15,6 @@ public class LoginDto {
     private String login;
 
     @NotNull(message = "Password cannot be null")
-    @Size(min = 10, max = 10, message = "Password must be exactly 10 characters long")
+    @Size(min = 5, max = 12, message = "Password must be exactly 10 characters long")
     private String password;
 }

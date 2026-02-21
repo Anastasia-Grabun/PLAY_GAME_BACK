@@ -9,7 +9,12 @@ public enum BucketType {
 
     private final String value;
 
-    BucketType(String value){
+    BucketType(String value) {
         this.value = value;
+    }
+
+    @Override
+    public String toString() {
+        return value;
     }
 }

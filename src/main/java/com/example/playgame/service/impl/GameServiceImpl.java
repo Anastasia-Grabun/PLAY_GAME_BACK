@@ -5,8 +5,10 @@ import com.example.playgame.dto.game.GameResponseDto;
 import com.example.playgame.dto.game.GameShortcutResponseDto;
 import com.example.playgame.dto.game.GameUpdateDto;
 import com.example.playgame.dto.mapper.GameDtoMapper;
+import com.example.playgame.dto.mapper.GenreDtoMapper;
 import com.example.playgame.entity.Bucket;
 import com.example.playgame.entity.Game;
+import com.example.playgame.entity.Genre;
 import com.example.playgame.exception.notfound.AccountNotFoundException;
 import com.example.playgame.exception.notfound.BucketNotFoundException;
 import com.example.playgame.exception.notfound.DevelopersGamesNotFoundException;
@@ -23,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class GameServiceImpl implements GameService {
     private final GameDtoMapper gameDtoMapper;
     private final BucketRepository bucketRepository;
     private final AccountRepository accountRepository;
+    private final GenreDtoMapper genreDtoMapper;
 
     @Override
     public GameResponseDto getById(Long id) {
@@ -51,7 +55,6 @@ public class GameServiceImpl implements GameService {
     public List<GameShortcutResponseDto> getAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Game> gamesPage = gameRepository.findAll(pageable);
-
         return gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
     }
 
@@ -70,9 +73,37 @@ public class GameServiceImpl implements GameService {
             throw new GameNotFoundException(updatedGameDto.getId());
         }
 
-        Game updatedGame = gameDtoMapper.gameUpdateDtoToGame(updatedGameDto);
-        gameRepository.save(updatedGame);
+        // Получаем существующую игру
+        Game existingGame = gameRepository.findById(updatedGameDto.getId())
+                .orElseThrow(() -> new GameNotFoundException(updatedGameDto.getId()));
+
+        // Если новое имя не null, обновляем имя
+        if (updatedGameDto.getName() != null) {
+            existingGame.setName(updatedGameDto.getName());
+        }
+
+        // Если новое описание не null, обновляем описание
+        if (updatedGameDto.getDescription() != null) {
+            existingGame.setDescription(updatedGameDto.getDescription());
+        }
+
+        // Если новая цена не null, обновляем цену
+        if (updatedGameDto.getPrice() != null) {
+            existingGame.setPrice(updatedGameDto.getPrice());
+        }
+
+        // Если новые жанры не null, преобразуем их и обновляем
+        if (updatedGameDto.getGenres() != null) {
+            List<Genre> genres = updatedGameDto.getGenres().stream()
+                    .map(genreDtoMapper::genreRequestDtoToGenre)
+                    .collect(Collectors.toList());
+            existingGame.setGenres(genres);
+        }
+
+        // Сохраняем обновленную игру
+        gameRepository.save(existingGame);
     }
+
 
     @Override
     public List<GameShortcutResponseDto> findGamesByDeveloper(Long developerId, int page, int size) {
@@ -179,7 +210,7 @@ public class GameServiceImpl implements GameService {
             throw new AccountNotFoundException(accountId);
         }
 
-        if (!gameRepository.existsRatingByAccountAndGame(accountId, gameId)) {
+        if (gameRepository.existsRatingByAccountAndGame(accountId, gameId)) {
             throw new IllegalArgumentException("Your rating already exists and you cannot change it.");
         }
 

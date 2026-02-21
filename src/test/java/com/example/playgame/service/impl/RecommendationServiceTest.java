@@ -6,6 +6,7 @@ import com.example.playgame.entity.Game;
 import com.example.playgame.entity.Genre;
 import com.example.playgame.repository.GameRepository;
 import com.example.playgame.repository.GenreRepository;
+import com.example.playgame.repository.PurchaseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,10 +41,10 @@ public class RecommendationServiceTest {
     private GenreRepository genreRepository;
 
     @Mock
-    private GameDtoMapper gameDtoMapper;
+    private PurchaseRepository purchaseRepository;
 
     @Mock
-    private AuthServiceImpl authService;
+    private GameDtoMapper gameDtoMapper;
 
     @InjectMocks
     private RecommendationServiceImpl recommendationService;
@@ -49,12 +52,10 @@ public class RecommendationServiceTest {
     private Long accountId;
     private Game game;
     private GameShortcutResponseDto gameShortcutResponseDto;
-    private String authHeader;
 
     @BeforeEach
     public void setUp() {
         accountId = 1L;
-        authHeader = "Bearer mock-token";
 
         game = new Game();
         game.setId(1L);
@@ -68,10 +69,10 @@ public class RecommendationServiceTest {
 
     @Test
     public void testGetRecommendations_Success() {
-        when(authService.extractAccountId(authHeader)).thenReturn(accountId);
         when(genreRepository.countFavouriteGenresByAccountId(accountId)).thenReturn(3);
         doNothing().when(favouriteGenresService).updateFavouriteGenres(accountId);
         when(genreRepository.findFavouriteGenresByAccountId(accountId)).thenReturn(Collections.singletonList(1L));
+        when(purchaseRepository.findGameIdsByOwnerId(accountId)).thenReturn(Collections.emptyList());
 
         Genre genre = new Genre();
         genre.setId(1L);
@@ -79,10 +80,11 @@ public class RecommendationServiceTest {
         game.setGenres(Collections.singletonList(genre));
 
         Page<Game> gamePage = new PageImpl<>(Collections.singletonList(game));
-        when(gameRepository.findTopRatedGames(any(Pageable.class))).thenReturn(gamePage);
+        when(gameRepository.findRecommendedGamesByGenresPaged(eq(Collections.singletonList(1L)), any(List.class), any(Pageable.class)))
+                .thenReturn(gamePage);
         when(gameDtoMapper.gameToGameShortcutResponseDto(game)).thenReturn(gameShortcutResponseDto);
 
-        List<GameShortcutResponseDto> result = recommendationService.getRecommendations(authHeader, 10, 0);
+        List<GameShortcutResponseDto> result = recommendationService.getRecommendations(accountId, 10, 0);
 
         assertEquals(1, result.size());
         assertEquals(gameShortcutResponseDto, result.get(0));
@@ -90,24 +92,30 @@ public class RecommendationServiceTest {
 
     @Test
     public void testGetRecommendations_InsufficientGenres() {
-        when(authService.extractAccountId(authHeader)).thenReturn(accountId);
         when(genreRepository.countFavouriteGenresByAccountId(accountId)).thenReturn(2);
 
-        assertThrows(IllegalArgumentException.class, () -> recommendationService.getRecommendations(authHeader, 10, 0));
+        assertThrows(IllegalArgumentException.class, () -> recommendationService.getRecommendations(accountId, 10, 0));
     }
 
     @Test
     public void testGetRecommendedGames_NoGenres() {
         when(genreRepository.findFavouriteGenresByAccountId(accountId)).thenReturn(Collections.emptyList());
+        when(purchaseRepository.findGameIdsByOwnerId(accountId)).thenReturn(Collections.emptyList());
+        Page<Game> fallbackPage = new PageImpl<>(Collections.singletonList(game));
+        when(gameRepository.findTopRatedGamesExcluding(any(List.class), any(Pageable.class))).thenReturn(fallbackPage);
+        when(gameDtoMapper.gameToGameShortcutResponseDto(game)).thenReturn(gameShortcutResponseDto);
 
         List<GameShortcutResponseDto> result = recommendationService.getRecommendedGames(accountId, 10, 0);
 
-        assertTrue(result.isEmpty());
+        assertEquals(1, result.size());
+        assertEquals(gameShortcutResponseDto, result.get(0));
+        verify(gameRepository).findTopRatedGamesExcluding(any(List.class), any(Pageable.class));
     }
 
     @Test
     public void testGetRecommendedGames_Success() {
         when(genreRepository.findFavouriteGenresByAccountId(accountId)).thenReturn(Collections.singletonList(1L));
+        when(purchaseRepository.findGameIdsByOwnerId(accountId)).thenReturn(Collections.emptyList());
 
         Genre genre = new Genre();
         genre.setId(1L);
@@ -115,12 +123,29 @@ public class RecommendationServiceTest {
         game.getGenres().add(genre);
 
         Page<Game> gamePage = new PageImpl<>(Collections.singletonList(game));
-        when(gameRepository.findTopRatedGames(any(Pageable.class))).thenReturn(gamePage);
+        when(gameRepository.findRecommendedGamesByGenresPaged(eq(Collections.singletonList(1L)), any(List.class), any(Pageable.class)))
+                .thenReturn(gamePage);
         when(gameDtoMapper.gameToGameShortcutResponseDto(game)).thenReturn(gameShortcutResponseDto);
 
         List<GameShortcutResponseDto> result = recommendationService.getRecommendedGames(accountId, 10, 0);
 
         assertEquals(1, result.size());
         assertEquals(gameShortcutResponseDto, result.get(0));
+    }
+
+    @Test
+    public void testGetRecommendedGames_GenreQueryReturnsEmpty_UsesFallback() {
+        when(genreRepository.findFavouriteGenresByAccountId(accountId)).thenReturn(Collections.singletonList(1L));
+        when(purchaseRepository.findGameIdsByOwnerId(accountId)).thenReturn(Collections.emptyList());
+        when(gameRepository.findRecommendedGamesByGenresPaged(any(), any(), any()))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+        Page<Game> fallbackPage = new PageImpl<>(Collections.singletonList(game));
+        when(gameRepository.findTopRatedGamesExcluding(any(List.class), any(Pageable.class))).thenReturn(fallbackPage);
+        when(gameDtoMapper.gameToGameShortcutResponseDto(game)).thenReturn(gameShortcutResponseDto);
+
+        List<GameShortcutResponseDto> result = recommendationService.getRecommendedGames(accountId, 10, 0);
+
+        assertEquals(1, result.size());
+        verify(gameRepository).findTopRatedGamesExcluding(any(List.class), any(Pageable.class));
     }
 }

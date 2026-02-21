@@ -34,6 +34,7 @@ public class CredentialController {
         credentialService.update(updatedCredential);
     }
 
+    //убираем
     @GetMapping("/role/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public List<CredentialResponseByRoleDto> getCredentialsByRole(
@@ -43,10 +44,11 @@ public class CredentialController {
         return credentialService.getCredentialsWithRole(roleId, page, limit);
     }
 
+    //назначает роли
     @PostMapping("/add-role")
     @PreAuthorize("hasRole('ADMIN')")
     public void addRoleToCredential(@RequestBody CredentialToAddRoleRequestDto credentialDto) {
-        credentialService.addNewRole(credentialDto);;
+        credentialService.addNewRole(credentialDto);
     }
 }
 

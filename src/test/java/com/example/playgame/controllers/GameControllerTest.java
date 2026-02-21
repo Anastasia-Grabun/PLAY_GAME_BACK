@@ -4,8 +4,10 @@ import com.example.playgame.dto.game.GameRequestDto;
 import com.example.playgame.dto.game.GameResponseDto;
 import com.example.playgame.dto.game.GameShortcutResponseDto;
 import com.example.playgame.dto.game.GameUpdateDto;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.GameService;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +24,12 @@ import static org.mockito.Mockito.*;
 public class GameControllerTest {
     @Mock
     private GameService gameService;
+
+    @Mock
+    private AuthService authService;
+
+    @Mock
+    private UserDetails userDetails;
 
     @InjectMocks
     private GameController gameController;
@@ -64,9 +72,7 @@ public class GameControllerTest {
     public void testGetAllGames_Success() {
         List<GameShortcutResponseDto> games = Collections.singletonList(new GameShortcutResponseDto());
         when(gameService.getAll(0, 10)).thenReturn(games);
-
         List<GameShortcutResponseDto> result = gameController.getAllGames(0, 10);
-
         assertEquals(games, result);
     }
 
@@ -79,8 +85,7 @@ public class GameControllerTest {
 
     @Test
     public void testUpdateGame_Success() {
-        gameController.updateGame(gameUpdateDto);
-
+        gameController.updateGame(1L, gameUpdateDto);
         verify(gameService, times(1)).update(gameUpdateDto);
     }
 
@@ -144,23 +149,10 @@ public class GameControllerTest {
     }
 
     @Test
-    public void testAddGameToBucket_Success() {
-        gameController.addGameToBucket(1L, 2L);
-
-        verify(gameService, times(1)).addGameToBucket(1L, 2L);
-    }
-
-    @Test
-    public void testRemoveGameFromBucket_Success() {
-        gameController.removeGameFromBucket(1L, 2L);
-
-        verify(gameService, times(1)).removeGameFromBucket(1L, 2L);
-    }
-
-    @Test
     public void testAddRating_Success() {
-        gameController.addRating(1L, 2L, BigDecimal.valueOf(4.5));
-
+        when(userDetails.getUsername()).thenReturn("user");
+        when(authService.getAccountIdByLogin("user")).thenReturn(2L);
+        gameController.addRating(userDetails, 1L, BigDecimal.valueOf(4.5));
         verify(gameService, times(1)).addRating(1L, 2L, BigDecimal.valueOf(4.5));
     }
 }

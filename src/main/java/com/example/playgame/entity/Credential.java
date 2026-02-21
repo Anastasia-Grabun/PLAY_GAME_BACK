@@ -26,7 +26,7 @@ public class Credential {
     @JoinColumn(name = "account_id")
     private Account account;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "credentials_roles",
             joinColumns = @JoinColumn(name = "credentials_login"),

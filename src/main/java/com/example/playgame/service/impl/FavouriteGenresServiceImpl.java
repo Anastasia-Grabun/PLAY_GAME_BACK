@@ -10,6 +10,7 @@ import com.example.playgame.repository.BucketRepository;
 import com.example.playgame.repository.GameRepository;
 import com.example.playgame.repository.GenreRepository;
 import com.example.playgame.repository.PurchaseRepository;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.FavouriteGenreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,7 @@ public class FavouriteGenresServiceImpl implements FavouriteGenreService {
     private final GameRepository gameRepository;
     private final GenreRepository genreRepository;
     private final BucketRepository bucketRepository;
-    private final AuthServiceImpl authService;
+    private final AuthService authService;
 
     private static final BigDecimal RATING_THRESHOLD = BigDecimal.valueOf(3.5);
     private static final int MIN_GENRE_OCCURRENCES = 3;
@@ -63,8 +64,7 @@ public class FavouriteGenresServiceImpl implements FavouriteGenreService {
 
     @Override
     @Transactional
-    public void addToFavouritesUsingToken(String authHeader, List<Long> genreIds) {
-        Long accountId = authService.extractAccountId(authHeader);
+    public void addToFavourites(Long accountId, List<Long> genreIds) {
         validateAndAddGenres(accountId, genreIds);
     }
 
@@ -99,7 +99,6 @@ public class FavouriteGenresServiceImpl implements FavouriteGenreService {
             }
         }
     }
-
 
     private List<Game> getWishlistGames(Long accountId) {
         Optional<Bucket> wishlist = bucketRepository

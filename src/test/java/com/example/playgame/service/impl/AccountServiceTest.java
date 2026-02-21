@@ -2,7 +2,6 @@ package com.example.playgame.service.impl;
 
 import com.example.playgame.dto.account.AccountRequestDto;
 import com.example.playgame.dto.account.AccountResponseDto;
-import com.example.playgame.dto.account.AccountShortcutResponseDto;
 import com.example.playgame.dto.account.AccountUpdateDto;
 import com.example.playgame.dto.mapper.AccountDtoMapper;
 import com.example.playgame.entity.Account;
@@ -14,21 +13,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.Optional;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -101,30 +94,25 @@ class AccountServiceTest {
     }
 
     @Test
-    void testGetAccountByUsername() {
-        when(accountRepository.findByUsername("testuser")).thenReturn(Optional.of(account));
+    void testGetByLogin() {
+        when(accountRepository.findByCredential_Login("testuser")).thenReturn(Optional.of(account));
+        when(accountDtoMapper.accountToAccountResponseDto(any(Account.class))).thenReturn(accountResponseDto);
 
-        when(accountDtoMapper.accountToAccountResponseDto(any(Account.class)))
-                .thenReturn(accountResponseDto);
-
-        AccountResponseDto result = accountService.findByUsername("testuser");
+        AccountResponseDto result = accountService.getByLogin("testuser");
 
         assertNotNull(result);
         assertEquals(accountResponseDto, result);
-
-        verify(accountRepository, times(1)).findByUsername("testuser");
+        verify(accountRepository, times(1)).findByCredential_Login("testuser");
         verify(accountDtoMapper, times(1)).accountToAccountResponseDto(account);
     }
 
     @Test
-    void testFindAccountByUsername_AccountNotFound() {
-        when(accountRepository.findByUsername("testuser")).thenReturn(Optional.empty());
+    void testGetByLogin_AccountNotFound() {
+        when(accountRepository.findByCredential_Login("testuser")).thenReturn(Optional.empty());
 
-        assertThrows(AccountNotFoundException.class, () -> {
-            accountService.findByUsername("testuser");
-        });
+        assertThrows(AccountNotFoundException.class, () -> accountService.getByLogin("testuser"));
 
-        verify(accountRepository, times(1)).findByUsername("testuser");
+        verify(accountRepository, times(1)).findByCredential_Login("testuser");
     }
 
     @Test
@@ -142,26 +130,22 @@ class AccountServiceTest {
     }
 
     @Test
-    void testGetAll() {
-        Pageable pageable = PageRequest.of(0, 10);
+    void testDeleteByLogin() {
+        when(accountRepository.findByCredential_Login("testuser")).thenReturn(Optional.of(account));
 
-        Page<Account> page = new PageImpl<>(List.of(account));
+        accountService.deleteByLogin("testuser");
 
-        when(accountRepository.findAll(pageable)).thenReturn(page);
+        verify(accountRepository, times(1)).findByCredential_Login("testuser");
+        verify(accountRepository, times(1)).deleteById(1L);
+    }
 
-        AccountShortcutResponseDto accountShortcutResponseDto = new AccountShortcutResponseDto();
-        accountShortcutResponseDto.setUsername(account.getUsername());
-        accountShortcutResponseDto.setEmail(account.getEmail());
+    @Test
+    void testDeleteByLogin_AccountNotFound() {
+        when(accountRepository.findByCredential_Login("unknown")).thenReturn(Optional.empty());
 
-        when(accountDtoMapper.accountsToAccountShortcutResponseDtos(anyList()))
-                .thenReturn(List.of(accountShortcutResponseDto));
+        assertThrows(AccountNotFoundException.class, () -> accountService.deleteByLogin("unknown"));
 
-        var result = accountService.getAll(10, 0);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(accountRepository, times(1)).findAll(pageable);
-        verify(accountDtoMapper, times(1)).accountsToAccountShortcutResponseDtos(Mockito.anyList());
+        verify(accountRepository, times(1)).findByCredential_Login("unknown");
     }
 
     @Test
@@ -183,28 +167,46 @@ class AccountServiceTest {
     }
 
     @Test
-    void testUpdate() {
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
+    void testUpdateByLogin() {
+        when(accountRepository.findByCredential_Login("testuser")).thenReturn(Optional.of(account));
         when(accountDtoMapper.accountToAccountResponseDto(any(Account.class))).thenReturn(accountResponseDto);
 
-        AccountResponseDto result = accountService.update(accountUpdateDto);
+        AccountResponseDto result = accountService.updateByLogin("testuser", accountUpdateDto);
 
         assertNotNull(result);
         assertEquals(accountResponseDto.getUsername(), result.getUsername());
+        verify(accountRepository, times(1)).findByCredential_Login("testuser");
         verify(accountRepository, times(1)).save(account);
     }
 
     @Test
-    void testUpdate_AccountNullException() {
-        assertThrows(AccountNullException.class, () -> accountService.update(null));
-        assertThrows(AccountNullException.class, () -> accountService.update(new AccountUpdateDto()));
+    void testUpdateByLogin_AccountNullException() {
+        assertThrows(AccountNullException.class, () -> accountService.updateByLogin("testuser", null));
     }
 
     @Test
-    void testUpdate_AccountNotFoundException() {
-        when(accountRepository.findById(1L)).thenReturn(Optional.empty());
+    void testUpdateByLogin_AccountNotFoundException() {
+        when(accountRepository.findByCredential_Login("unknown")).thenReturn(Optional.empty());
 
-        assertThrows(AccountNotFoundException.class, () -> accountService.update(accountUpdateDto));
+        assertThrows(AccountNotFoundException.class, () -> accountService.updateByLogin("unknown", accountUpdateDto));
+    }
+
+    @Test
+    void testGetBalanceByLogin() {
+        when(accountRepository.findByCredential_Login("testuser")).thenReturn(Optional.of(account));
+
+        BigDecimal balance = accountService.getBalanceByLogin("testuser");
+
+        assertNotNull(balance);
+        assertEquals(account.getBalance(), balance);
+        verify(accountRepository, times(1)).findByCredential_Login("testuser");
+    }
+
+    @Test
+    void testGetBalanceByLogin_AccountNotFound() {
+        when(accountRepository.findByCredential_Login("unknown")).thenReturn(Optional.empty());
+
+        assertThrows(AccountNotFoundException.class, () -> accountService.getBalanceByLogin("unknown"));
     }
 
     @Test

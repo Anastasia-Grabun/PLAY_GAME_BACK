@@ -4,9 +4,13 @@ import com.example.playgame.dto.JwtResponseDto;
 import com.example.playgame.dto.LoginDto;
 import com.example.playgame.dto.RegisterDto;
 import com.example.playgame.entity.Account;
+import com.example.playgame.entity.Bucket;
 import com.example.playgame.entity.Credential;
 import com.example.playgame.entity.Role;
+import com.example.playgame.entity.enums.BucketType;
+import com.example.playgame.entity.enums.Roles;
 import com.example.playgame.repository.AccountRepository;
+import com.example.playgame.repository.BucketRepository;
 import com.example.playgame.repository.CredentialRepository;
 import com.example.playgame.repository.RoleRepository;
 import com.example.playgame.security.CustomUserDetails;
@@ -25,7 +29,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +47,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final CustomUserServiceImpl customUserService;
+    private final BucketRepository bucketRepository;
+
 
     @Override
     @Transactional
@@ -74,13 +83,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         credential.setPassword(passwordEncoder.encode(registerDto.getPassword()));
 
 
-        Role role = roleRepository.findById(2L)
-                .orElseThrow();
+        Role role = roleRepository.findByName(Roles.USER)
+                .orElseThrow(() -> new RuntimeException("Error: Role USER not found in DB"));
         credential.setRoles(Collections.singletonList(role));
 
         accountRepository.save(newAccount);
         credential.setAccount(newAccount);
         credentialRepository.save(credential);
+
+        Bucket wishlist = Bucket.builder()
+                .type(BucketType.WISHLIST)
+                .account(newAccount)
+                .dateAdded(new Date())
+                .games(new ArrayList<>())
+                .build();
+        Bucket buylist = Bucket.builder()
+                .type(BucketType.BUYLIST)
+                .account(newAccount)
+                .dateAdded(new Date())
+                .games(new ArrayList<>())
+                .build();
+
+        bucketRepository.save(wishlist);
+        bucketRepository.save(buylist);
 
         String token = jwtService.generateToken(
                 Map.of("role", credential.getRoles().get(0).getName().name()),

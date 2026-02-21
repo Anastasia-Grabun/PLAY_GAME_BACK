@@ -14,6 +14,7 @@ import java.util.Optional;
 @Repository
 public interface CredentialRepository extends JpaRepository<Credential, Long> {
     boolean existsByLogin(String login);
+
     @Query("SELECT c FROM Credential c JOIN FETCH c.roles WHERE c.login = :login")
     Optional<Credential> findByLogin(@Param("login") String login);
 

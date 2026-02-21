@@ -46,9 +46,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<TransactionResponseDto> getAllByAccountId(Long accountId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-
         Page<Transaction> transactions = transactionRepository.findAllByAccount_Id(accountId, pageable);
-
-        return transactionDtoMapper.transactionsToTransactionResponseDtos(transactions. getContent());
+        return transactionDtoMapper.transactionsToTransactionResponseDtos(transactions.getContent());
     }
 }

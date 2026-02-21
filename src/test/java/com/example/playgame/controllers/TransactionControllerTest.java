@@ -1,6 +1,7 @@
 package com.example.playgame.controllers;
 
 import com.example.playgame.dto.transaction.TransactionResponseDto;
+import com.example.playgame.service.AuthService;
 import com.example.playgame.service.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,9 @@ import static org.mockito.Mockito.when;
 public class TransactionControllerTest {
     @Mock
     private TransactionService transactionService;
+
+    @Mock
+    private AuthService authService;
 
     @InjectMocks
     private TransactionController transactionController;
@@ -40,11 +44,11 @@ public class TransactionControllerTest {
     }
 
     @Test
-    public void testGetAllTransactionsByAccountId_Success() {
+    public void testGetTransactionsByAccountId_Success() {
         List<TransactionResponseDto> transactions = Collections.singletonList(transactionResponseDto);
         when(transactionService.getAllByAccountId(1L, 0, 10)).thenReturn(transactions);
 
-        List<TransactionResponseDto> result = transactionController.getAllTransactionsByAccountId(1L, 0, 10);
+        List<TransactionResponseDto> result = transactionController.getTransactionsByAccountId(1L, 0, 10);
 
         assertEquals(transactions, result);
     }

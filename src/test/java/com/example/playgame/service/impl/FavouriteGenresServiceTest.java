@@ -9,6 +9,7 @@ import com.example.playgame.repository.BucketRepository;
 import com.example.playgame.repository.GameRepository;
 import com.example.playgame.repository.GenreRepository;
 import com.example.playgame.repository.PurchaseRepository;
+import com.example.playgame.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +43,9 @@ public class FavouriteGenresServiceTest {
     @Mock
     private BucketRepository bucketRepository;
 
+    @Mock
+    private AuthService authService;  // Мокаем AuthService
+
     @InjectMocks
     private FavouriteGenresServiceImpl favouriteGenresService;
 
@@ -64,13 +68,15 @@ public class FavouriteGenresServiceTest {
         purchase = new Purchase();
         purchase.setGame(game);
     }
+
     @Test
     void testUpdateFavouriteGenres_Success() {
         when(purchaseRepository.findByOwnerId(accountId)).thenReturn(Collections.singletonList(purchase));
         when(gameRepository.getRatingByAccountAndGame(game.getId(), accountId)).thenReturn(Optional.of(BigDecimal.valueOf(4.5)));
         when(bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.WISHLIST.toString())).thenReturn(Optional.empty());
 
-        favouriteGenresService.updateFavouriteGenres(accountId);
+        // Теперь вызываем метод с извлеченным accountId
+        favouriteGenresService.updateFavouriteGenres(accountId);  // Передаем accountId
 
         Map<Long, BigDecimal> genreCount = new HashMap<>();
         favouriteGenresService.collectGenres(Collections.singletonList(game), genreCount, BigDecimal.ONE); // Use a single game with a weight of 1
@@ -89,7 +95,8 @@ public class FavouriteGenresServiceTest {
     public void testUpdateFavouriteGenres_NoPurchases() {
         when(purchaseRepository.findByOwnerId(accountId)).thenReturn(Collections.emptyList());
 
-        favouriteGenresService.updateFavouriteGenres(accountId);
+        // Теперь вызываем метод с извлеченным accountId
+        favouriteGenresService.updateFavouriteGenres(accountId);  // Передаем accountId
 
         verify(genreRepository, never()).addFavouriteGenre(anyLong(), anyLong());
     }
@@ -99,7 +106,7 @@ public class FavouriteGenresServiceTest {
         when(genreRepository.existsById(genreId)).thenReturn(true);
         when(genreRepository.existsByAccountIdAndGenreId(accountId, genreId)).thenReturn(false);
 
-        favouriteGenresService.addToFavouritesForNewAccount(accountId, Collections.singletonList(genreId));
+        favouriteGenresService.addToFavourites(accountId, Collections.singletonList(genreId));
 
         verify(genreRepository, times(1)).addFavouriteGenre(accountId, genreId);
     }
@@ -107,7 +114,7 @@ public class FavouriteGenresServiceTest {
     @Test
     public void testAddToFavouritesForNewAccount_TooManyGenres() {
         assertThrows(IllegalArgumentException.class, () -> {
-            favouriteGenresService.addToFavouritesForNewAccount(accountId, List.of(1L, 2L, 3L, 4L));
+            favouriteGenresService.addToFavourites(accountId, List.of(1L, 2L, 3L, 4L));
         });
     }
 
@@ -116,7 +123,7 @@ public class FavouriteGenresServiceTest {
         when(genreRepository.existsById(genreId)).thenReturn(false);
 
         assertThrows(GenreNotFoundException.class, () -> {
-            favouriteGenresService.addToFavouritesForNewAccount(accountId, Collections.singletonList(genreId));
+            favouriteGenresService.addToFavourites(accountId, Collections.singletonList(genreId));
         });
     }
 
@@ -125,8 +132,10 @@ public class FavouriteGenresServiceTest {
         when(genreRepository.existsById(genreId)).thenReturn(true);
         when(genreRepository.existsByAccountIdAndGenreId(accountId, genreId)).thenReturn(true);
 
-        favouriteGenresService.addToFavouritesForNewAccount(accountId, Collections.singletonList(genreId));
+        favouriteGenresService.addToFavourites(accountId, Collections.singletonList(genreId));
 
         verify(genreRepository, never()).addFavouriteGenre(anyLong(), anyLong());
     }
 }
+
+

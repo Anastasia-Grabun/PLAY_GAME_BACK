@@ -51,9 +51,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     public List<PurchaseResponseDto> getPurchasesByOwnerId(Long accountId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-
-        Page<Purchase> purchases =  purchaseRepository.findByOwnerId(accountId, pageable);
-
+        Page<Purchase> purchases = purchaseRepository.findByOwnerId(accountId, pageable);
         return purchaseDtoMapper.purchasesToPurchaseResponseDtos(purchases.getContent());
     }
 }

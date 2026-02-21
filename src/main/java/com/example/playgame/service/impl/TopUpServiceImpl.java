@@ -40,10 +40,8 @@ public class TopUpServiceImpl implements TopUpService {
         if (!accountRepository.existsById(accountId)) {
             throw new AccountNotFoundException(accountId);
         }
-
         Pageable pageable = PageRequest.of(page, size);
         Page<TopUp> topUps = topUpRepository.findByAccountId(accountId, pageable);
-
         return topUpDtoMapper.topUpsToTopUpDtos(topUps.getContent());
     }
 
