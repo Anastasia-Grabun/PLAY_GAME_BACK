@@ -129,8 +129,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private void validateRegistration(RegisterDto registerDto) {
-        if(accountRepository.existsByUsername(registerDto.getUsername())){
+        if (accountRepository.existsByUsername(registerDto.getUsername())) {
             throw new IllegalArgumentException("Account with such username has already exists");
+        }
+        boolean passwordAlreadyUsed = credentialRepository.findAll().stream()
+                .anyMatch(c -> passwordEncoder.matches(registerDto.getPassword(), c.getPassword()));
+        if (passwordAlreadyUsed) {
+            throw new IllegalArgumentException("Password is already used by another user");
         }
     }
 }
