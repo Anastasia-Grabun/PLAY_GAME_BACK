@@ -14,6 +14,8 @@ import com.example.playgame.repository.GameRepository;
 import com.example.playgame.service.BucketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -42,6 +44,7 @@ public class BucketServiceImpl implements BucketService {
     }
 
     @Override
+    @Transactional
     public BucketResponseDto getWishlistByAccountId(Long accountId) {
         Bucket bucket = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.WISHLIST.toString())
                 .orElseThrow(() -> new BucketNotFoundException(accountId));

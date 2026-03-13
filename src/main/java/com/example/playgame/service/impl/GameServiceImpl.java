@@ -38,7 +38,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public GameResponseDto getById(Long id) {
-        Game game = gameRepository.findById(id)
+        Game game = gameRepository.findByIdWithGenresAndDeveloper(id)
                 .orElseThrow(() -> new GameNotFoundException(id));
 
         return gameDtoMapper.gameToGameResponseDto(game);
@@ -73,26 +73,21 @@ public class GameServiceImpl implements GameService {
             throw new GameNotFoundException(updatedGameDto.getId());
         }
 
-        // Получаем существующую игру
         Game existingGame = gameRepository.findById(updatedGameDto.getId())
                 .orElseThrow(() -> new GameNotFoundException(updatedGameDto.getId()));
 
-        // Если новое имя не null, обновляем имя
         if (updatedGameDto.getName() != null) {
             existingGame.setName(updatedGameDto.getName());
         }
 
-        // Если новое описание не null, обновляем описание
         if (updatedGameDto.getDescription() != null) {
             existingGame.setDescription(updatedGameDto.getDescription());
         }
 
-        // Если новая цена не null, обновляем цену
         if (updatedGameDto.getPrice() != null) {
             existingGame.setPrice(updatedGameDto.getPrice());
         }
 
-        // Если новые жанры не null, преобразуем их и обновляем
         if (updatedGameDto.getGenres() != null) {
             List<Genre> genres = updatedGameDto.getGenres().stream()
                     .map(genreDtoMapper::genreRequestDtoToGenre)
@@ -100,7 +95,6 @@ public class GameServiceImpl implements GameService {
             existingGame.setGenres(genres);
         }
 
-        // Сохраняем обновленную игру
         gameRepository.save(existingGame);
     }
 
@@ -212,6 +206,14 @@ public class GameServiceImpl implements GameService {
 
         if (gameRepository.existsRatingByAccountAndGame(accountId, gameId)) {
             throw new IllegalArgumentException("Your rating already exists and you cannot change it.");
+        }
+
+        if (rating == null) {
+            throw new IllegalArgumentException("Rating cannot be null");
+        }
+
+        if (rating.scale() > 0 && rating.stripTrailingZeros().scale() > 0) {
+            throw new IllegalArgumentException("Rating must be an integer (1-5)");
         }
 
         gameRepository.addRatingIfNotExists(accountId, gameId, rating);

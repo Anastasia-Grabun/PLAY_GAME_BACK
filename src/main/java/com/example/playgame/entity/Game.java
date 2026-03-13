@@ -49,7 +49,7 @@ public class Game{
     private BigDecimal rating;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "developers_id")
+    @JoinColumn(name = "developers_id", nullable = true)
     private Account developer;
 
     @ManyToMany(fetch = FetchType.LAZY)

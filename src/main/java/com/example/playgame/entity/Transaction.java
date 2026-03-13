@@ -40,6 +40,11 @@ public class Transaction {
     @JoinColumn(name = "account_id")
     private Account account;
 
-    @OneToMany(mappedBy = "transaction", fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "transaction",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<Purchase> purchases;
 }

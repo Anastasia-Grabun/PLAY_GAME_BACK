@@ -38,6 +38,12 @@ public class FavouriteGenresServiceImpl implements FavouriteGenreService {
     private static final BigDecimal PURCHASE_GENRE_WEIGHT = BigDecimal.valueOf(1.0);
 
     @Override
+    @Transactional
+    public void addToFavourites(Long accountId, List<Long> genreIds) {
+        validateAndAddGenres(accountId, genreIds);
+    }
+
+    @Override
     public void updateFavouriteGenres(Long accountId) {
         List<Purchase> purchases = purchaseRepository.findByOwnerId(accountId);
 
@@ -61,16 +67,9 @@ public class FavouriteGenresServiceImpl implements FavouriteGenreService {
         favouriteGenreIds.forEach(genreId -> addToFavourites(accountId, genreId));
     }
 
-
-    @Override
-    @Transactional
-    public void addToFavourites(Long accountId, List<Long> genreIds) {
-        validateAndAddGenres(accountId, genreIds);
-    }
-
     private void validateAndAddGenres(Long accountId, List<Long> genreIds) {
-        if (genreIds.size() > 3) {
-            throw new IllegalArgumentException("You can't add more than 3 favourite genres");
+        if (genreIds.size() != 3) {
+            throw new IllegalArgumentException("You can add only 3 favourite genres");
         }
 
         for (Long genreId : genreIds) {

@@ -4,6 +4,7 @@ import com.example.playgame.entity.Game;
 import com.example.playgame.entity.Genre;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,11 @@ import java.util.Optional;
 
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long> {
+
+    @EntityGraph(attributePaths = {"genres", "developer"})
+    @Query("SELECT g FROM Game g WHERE g.id = :id")
+    Optional<Game> findByIdWithGenresAndDeveloper(@Param("id") Long id);
+
     Page<Game> findByDeveloperId(Long developerId, Pageable pageable);
 
     Optional<Game> findByName(String name);

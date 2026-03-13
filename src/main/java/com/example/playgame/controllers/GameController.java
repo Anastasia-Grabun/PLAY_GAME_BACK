@@ -14,7 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -40,15 +39,6 @@ public class GameController {
         gameService.save(gameDto);
     }
 
-    //убрать
-    @GetMapping
-    @PreAuthorize("hasRole('USER')")
-    public List<GameShortcutResponseDto> getAllGames(
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer limit) {
-        return gameService.getAll(page, limit);
-    }
-
     //девелопер ток этой игры
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('DEVELOPER')")
@@ -62,7 +52,7 @@ public class GameController {
     @PreAuthorize("hasRole('DEVELOPER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateGame(@PathVariable Long id, @Valid @RequestBody GameUpdateDto updatedGameDto) {
-        updatedGameDto.setId(id);
+        /*updatedGameDto.setId(id);*/
         gameService.update(updatedGameDto);
     }
 

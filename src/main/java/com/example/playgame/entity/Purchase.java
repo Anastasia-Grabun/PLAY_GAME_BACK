@@ -31,6 +31,6 @@ public class Purchase{
     private Timestamp date;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "transaction_id")
+    @JoinColumn(name = "transaction_id", nullable = false)
     private Transaction transaction;
 }

@@ -1,5 +1,6 @@
 package com.example.playgame.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,5 +16,6 @@ import java.time.ZonedDateTime;
 public class ExceptionDto {
     public String message;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     public ZonedDateTime time;
 }

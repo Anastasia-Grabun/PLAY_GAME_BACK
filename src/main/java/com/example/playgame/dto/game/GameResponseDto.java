@@ -1,5 +1,8 @@
 package com.example.playgame.dto.game;
 
+import com.example.playgame.dto.account.AccountWithIdAndUsernameDto;
+import com.example.playgame.dto.genre.GenreShortDto;
+import com.example.playgame.dto.genre.GenreToGetResponseDto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -13,6 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -38,4 +42,8 @@ public class GameResponseDto {
     @Min(value = 0, message = "Rating must be between 0 and 10")
     @Max(value = 10, message = "Rating must be between 0 and 10")
     private BigDecimal rating;
+
+    private List<GenreShortDto> genres;
+
+    private AccountWithIdAndUsernameDto developerName;
 }
