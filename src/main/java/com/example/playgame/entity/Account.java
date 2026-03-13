@@ -1,9 +1,12 @@
 package com.example.playgame.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
@@ -63,4 +66,11 @@ public class Account {
             mappedBy = "developer"
     )
     private List<Game> games;
+
+    @OneToMany(
+            mappedBy = "account",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    private List<TopUp> topUps;
 }

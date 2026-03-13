@@ -6,13 +6,13 @@ import com.example.playgame.dto.game.GameShortcutResponseDto;
 import com.example.playgame.service.AccountService;
 import com.example.playgame.service.AuthService;
 import com.example.playgame.service.FavouriteGenreService;
+import com.example.playgame.security.CustomUserDetails;
 import com.example.playgame.service.RecommendationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,11 +35,10 @@ public class AccountsController {
     private final RecommendationService recommendationService;
     private final FavouriteGenreService favouriteGenreService;
 
-    //тут просто юзер
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'DEVELOPER')")
-    public AccountResponseDto getCurrentAccount(@AuthenticationPrincipal UserDetails userDetails) {
-        return accountService.getByLogin(userDetails.getUsername());
+    @PreAuthorize("hasRole('USER')")
+    public AccountResponseDto getCurrentAccount(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        return accountService.getByLogin(customUserDetails.getUsername());
     }
 
     //а зачем
@@ -53,18 +52,17 @@ public class AccountsController {
     @PutMapping()
     @PreAuthorize("hasRole('USER')")
     public AccountResponseDto updateAccount(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody AccountUpdateDto accountDto) {
-        return accountService.updateByLogin(userDetails.getUsername(), accountDto);
+        return accountService.updateByLogin(customUserDetails.getUsername(), accountDto);
     }
 
     //
     @DeleteMapping("/me")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'DEVELOPER')")
-    public void deleteCurrentAccount(@AuthenticationPrincipal UserDetails userDetails) {
-        accountService.deleteByLogin(userDetails.getUsername());
+    public void deleteCurrentAccount(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        accountService.deleteByLogin(customUserDetails.getUsername());
     }
-
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -74,11 +72,10 @@ public class AccountsController {
 
     @GetMapping("/me/balance")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'DEVELOPER')")
-    public BigDecimal getCurrentBalance(@AuthenticationPrincipal UserDetails userDetails) {
-        return accountService.getBalanceByLogin(userDetails.getUsername());
+    public BigDecimal getCurrentBalance(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        return accountService.getBalanceByLogin(customUserDetails.getUsername());
     }
 
-    //удалить, зачем нужно
     @GetMapping("/{id}/balance")
     @PreAuthorize("hasRole('ADMIN')")
     public BigDecimal getBalanceByAccountId(@PathVariable("id") Long accountId) {
@@ -96,19 +93,19 @@ public class AccountsController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/recommendations")
     public List<GameShortcutResponseDto> getRecommendationsForUser(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(defaultValue = "10") Integer limit,
             @RequestParam(defaultValue = "0") Integer page) {
-        Long accountId = authService.getAccountIdByLogin(userDetails.getUsername());
+        Long accountId = authService.getAccountIdByLogin(customUserDetails.getUsername());
         return recommendationService.getRecommendations(accountId, limit, page);
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/favourites")
     public void addToFavouritesFromToken(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody List<Long> genreIds) {
-        Long accountId = authService.getAccountIdByLogin(userDetails.getUsername());
+        Long accountId = authService.getAccountIdByLogin(customUserDetails.getUsername());
         favouriteGenreService.addToFavourites(accountId, genreIds);
     }
 }
