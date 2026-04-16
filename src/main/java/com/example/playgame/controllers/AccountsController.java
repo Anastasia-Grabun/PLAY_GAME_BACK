@@ -22,10 +22,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import java.math.BigDecimal;
-import java.util.List;
 
-@Tag(name = "Accounts", description = "Аккаунты пользователей: профиль, баланс, рекомендации, избранные жанры")
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Tag(name = "Accounts", description = "Аккаунты пользователей: профиль, рекомендации, избранные жанры")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/accounts")
@@ -36,9 +37,17 @@ public class AccountsController {
     private final FavouriteGenreService favouriteGenreService;
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'DEVELOPER')")
     public AccountResponseDto getCurrentAccount(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         return accountService.getByLogin(customUserDetails.getUsername());
+    }
+
+    @GetMapping("/me/roles")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'DEVELOPER')")
+    public List<String> getMyRoles(@AuthenticationPrincipal CustomUserDetails user) {
+        return user.getAuthorities().stream()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .collect(Collectors.toList());
     }
 
     //а зачем
@@ -70,26 +79,6 @@ public class AccountsController {
         accountService.deleteById(id);
     }
 
-    @GetMapping("/me/balance")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'DEVELOPER')")
-    public BigDecimal getCurrentBalance(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        return accountService.getBalanceByLogin(customUserDetails.getUsername());
-    }
-
-    @GetMapping("/{id}/balance")
-    @PreAuthorize("hasRole('ADMIN')")
-    public BigDecimal getBalanceByAccountId(@PathVariable("id") Long accountId) {
-        return accountService.checkBalance(accountId);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{accountId}/balance")
-    public void updateAccountBalance(
-            @PathVariable Long accountId,
-            @RequestBody BigDecimal newBalance) {
-        accountService.updateBalance(accountId, newBalance);
-    }
-
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/recommendations")
     public List<GameShortcutResponseDto> getRecommendationsForUser(
@@ -109,5 +98,3 @@ public class AccountsController {
         favouriteGenreService.addToFavourites(accountId, genreIds);
     }
 }
-
-

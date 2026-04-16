@@ -1,5 +1,6 @@
 package com.example.playgame.service.impl;
 
+import com.example.playgame.dto.account.AccountWithIdAndUsernameDto;
 import com.example.playgame.dto.game.GameRequestDto;
 import com.example.playgame.dto.game.GameResponseDto;
 import com.example.playgame.dto.game.GameShortcutResponseDto;
@@ -17,6 +18,7 @@ import com.example.playgame.repository.AccountRepository;
 import com.example.playgame.repository.BucketRepository;
 import com.example.playgame.repository.GameRepository;
 import com.example.playgame.service.GameService;
+import com.example.playgame.util.ImageUrlResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -35,19 +37,21 @@ public class GameServiceImpl implements GameService {
     private final BucketRepository bucketRepository;
     private final AccountRepository accountRepository;
     private final GenreDtoMapper genreDtoMapper;
+    private final ImageUrlResolver imageUrlResolver;
 
     @Override
     public GameResponseDto getById(Long id) {
         Game game = gameRepository.findByIdWithGenresAndDeveloper(id)
                 .orElseThrow(() -> new GameNotFoundException(id));
 
-        return gameDtoMapper.gameToGameResponseDto(game);
+        GameResponseDto dto = gameDtoMapper.gameToGameResponseDto(game);
+        resolveCoverUrl(dto);
+        return dto;
     }
 
     @Override
     public void save(GameRequestDto gameDto) {
         Game newGame = gameDtoMapper.gameRequestDtoTOGame(gameDto);
-
         gameRepository.save(newGame);
     }
 
@@ -55,7 +59,9 @@ public class GameServiceImpl implements GameService {
     public List<GameShortcutResponseDto> getAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Game> gamesPage = gameRepository.findAll(pageable);
-        return gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        List<GameShortcutResponseDto> dtos = gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        dtos.forEach(this::resolveCoverUrl);
+        return dtos;
     }
 
     @Override
@@ -108,14 +114,21 @@ public class GameServiceImpl implements GameService {
             throw new DevelopersGamesNotFoundException(developerId);
         }
 
-        return gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        List<GameShortcutResponseDto> dtos = gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        dtos.forEach(this::resolveCoverUrl);
+        return dtos;
     }
 
     @Override
     public GameShortcutResponseDto findGameByName(String name) {
-        Game game = gameRepository.findByName(name)
-                .orElseThrow(() -> new GameNotFoundException("Game with name " + name + " not found"));
-        return gameDtoMapper.gameToGameShortcutResponseDto(game);
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Укажите имя для поиска");
+        }
+        Game game = gameRepository.findByNameIgnoreCase(name.trim())
+                .orElseThrow(() -> new GameNotFoundException("Игра не найдена"));
+        GameShortcutResponseDto dto = gameDtoMapper.gameToGameShortcutResponseDto(game);
+        resolveCoverUrl(dto);
+        return dto;
     }
 
     @Override
@@ -130,7 +143,9 @@ public class GameServiceImpl implements GameService {
             gamesPage = gameRepository.findAllByOrderByRatingDesc(pageable);
         }
 
-        return gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        List<GameShortcutResponseDto> dtos = gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        dtos.forEach(this::resolveCoverUrl);
+        return dtos;
     }
 
     @Override
@@ -144,7 +159,9 @@ public class GameServiceImpl implements GameService {
             gamesPage = gameRepository.findAllByOrderByPriceDesc(pageable);
         }
 
-        return gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        List<GameShortcutResponseDto> dtos = gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        dtos.forEach(this::resolveCoverUrl);
+        return dtos;
     }
 
     @Override
@@ -152,7 +169,9 @@ public class GameServiceImpl implements GameService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Game> gamesPage = gameRepository.findByGenre(genreId, pageable);
 
-        return gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        List<GameShortcutResponseDto> dtos = gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        dtos.forEach(this::resolveCoverUrl);
+        return dtos;
     }
 
     @Override
@@ -164,7 +183,9 @@ public class GameServiceImpl implements GameService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Game> gamesPage = gameRepository.findByPriceBetween(minPrice, maxPrice, pageable);
 
-        return gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        List<GameShortcutResponseDto> dtos = gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        dtos.forEach(this::resolveCoverUrl);
+        return dtos;
     }
 
     @Override
@@ -176,8 +197,10 @@ public class GameServiceImpl implements GameService {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new GameNotFoundException(gameId));
 
-        bucket.getGames().add(game);
-        bucketRepository.save(bucket);
+        if (bucket.getGames().stream().noneMatch(g -> g.getId().equals(game.getId()))) {
+            bucket.getGames().add(game);
+            bucketRepository.save(bucket);
+        }
     }
 
     @Override
@@ -194,6 +217,22 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    public List<AccountWithIdAndUsernameDto> getDevelopers() {
+        return accountRepository.findDevelopersWithGames().stream()
+                .map(a -> new AccountWithIdAndUsernameDto(a.getId(), a.getUsername()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<GameShortcutResponseDto> getNewReleases(int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        Page<Game> gamesPage = gameRepository.findAllByOrderByDateDesc(pageable);
+        List<GameShortcutResponseDto> dtos = gameDtoMapper.gamesToGameShortcutDtos(gamesPage.getContent());
+        dtos.forEach(this::resolveCoverUrl);
+        return dtos;
+    }
+
+    @Override
     @Transactional
     public void addRating(Long gameId, Long accountId, BigDecimal rating) {
         if (!gameRepository.existsById(gameId)) {
@@ -205,17 +244,35 @@ public class GameServiceImpl implements GameService {
         }
 
         if (gameRepository.existsRatingByAccountAndGame(accountId, gameId)) {
-            throw new IllegalArgumentException("Your rating already exists and you cannot change it.");
+            throw new IllegalArgumentException("Рейтинг уже существует и вы не можете  его изменить");
         }
 
         if (rating == null) {
-            throw new IllegalArgumentException("Rating cannot be null");
+            throw new IllegalArgumentException("Рейтинг не может быть null");
+        }
+
+        if (rating.compareTo(BigDecimal.ZERO) < 0 || rating.compareTo(BigDecimal.valueOf(5)) > 0) {
+            throw new IllegalArgumentException("Нельзя поставить больше 5 или меньше 0. Допустимый диапазон: 0–5.");
         }
 
         if (rating.scale() > 0 && rating.stripTrailingZeros().scale() > 0) {
-            throw new IllegalArgumentException("Rating must be an integer (1-5)");
+            throw new IllegalArgumentException("Рейтинг должен быть целым числом от 0 до 5");
         }
 
         gameRepository.addRatingIfNotExists(accountId, gameId, rating);
+    }
+
+    @Override
+    public boolean hasRated(Long gameId, Long accountId) {
+        return gameRepository.existsRatingByAccountAndGame(accountId, gameId);
+    }
+
+
+    private void resolveCoverUrl(GameResponseDto dto) {
+        if (dto != null) dto.setCoverImageUrl(imageUrlResolver.resolve(dto.getCoverImageUrl()));
+    }
+
+    private void resolveCoverUrl(GameShortcutResponseDto dto) {
+        if (dto != null) dto.setCoverImageUrl(imageUrlResolver.resolve(dto.getCoverImageUrl()));
     }
 }

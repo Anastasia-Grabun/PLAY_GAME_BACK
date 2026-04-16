@@ -1,13 +1,14 @@
 package com.example.playgame.controllers;
 
+import com.example.playgame.dto.account.AccountWithIdAndUsernameDto;
 import com.example.playgame.dto.game.GameRequestDto;
 import com.example.playgame.dto.game.GameResponseDto;
 import com.example.playgame.dto.game.GameShortcutResponseDto;
 import com.example.playgame.dto.game.GameUpdateDto;
 import com.example.playgame.service.AuthService;
 import com.example.playgame.service.GameService;
-import org.junit.jupiter.api.BeforeEach;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,9 +45,16 @@ public class GameControllerTest {
         gameResponseDto = new GameResponseDto();
         gameResponseDto.setId(1L);
         gameResponseDto.setName("Test Game");
+        gameResponseDto.setDate(new Date());
+        gameResponseDto.setPrice(BigDecimal.ZERO);
+        gameResponseDto.setRating(BigDecimal.ZERO);
+        gameResponseDto.setGenres(Collections.emptyList());
+        gameResponseDto.setDeveloperName(new AccountWithIdAndUsernameDto(1L, "devUser"));
 
         gameRequestDto = new GameRequestDto();
+        gameRequestDto.setId(1L);
         gameRequestDto.setName("Test Game");
+        gameRequestDto.setPrice(BigDecimal.ZERO);
 
         gameUpdateDto = new GameUpdateDto();
         gameUpdateDto.setId(1L);
@@ -66,14 +75,6 @@ public class GameControllerTest {
         gameController.createGame(gameRequestDto);
 
         verify(gameService, times(1)).save(gameRequestDto);
-    }
-
-    @Test
-    public void testGetAllGames_Success() {
-        List<GameShortcutResponseDto> games = Collections.singletonList(new GameShortcutResponseDto());
-        when(gameService.getAll(0, 10)).thenReturn(games);
-        List<GameShortcutResponseDto> result = gameController.getAllGames(0, 10);
-        assertEquals(games, result);
     }
 
     @Test

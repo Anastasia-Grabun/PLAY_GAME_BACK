@@ -10,7 +10,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,6 +47,9 @@ public class Game{
     @Column(name = "rating")
     private BigDecimal rating;
 
+    @Column(name = "cover_image_url")
+    private String coverImageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "developers_id", nullable = true)
     private Account developer;
@@ -60,17 +62,6 @@ public class Game{
     )
     private List<Genre> genres;
 
-    @OneToMany(
-            fetch = FetchType.LAZY,
-            mappedBy = "game"
-    )
-    private List<Purchase> purchases;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "buckets_games",
-            joinColumns = @JoinColumn(name = "game_id"),
-            inverseJoinColumns = @JoinColumn(name = "bucket_id")
-    )
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "games")
     private List<Bucket> buckets;
 }

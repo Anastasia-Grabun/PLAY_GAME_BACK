@@ -58,3 +58,19 @@ databaseChangeLog:
       file: db/changelog/0.0.1/insert/insert-games_ratings.sql
   - include:
       file: db/changelog/0.0.1/insert/insert-favourite_genres.sql
+  - include:
+      file: db/changelog/0.0.2/add-games-cover-image.sql
+  - include:
+      file: db/changelog/0.0.2/translate-games-and-genres-to-russian.sql
+  - include:
+      file: db/changelog/0.0.2/update-games-cover-images-by-id.sql
+  - include:
+      file: db/changelog/0.0.3/add-email-verification-to-accounts.sql
+  - include:
+      file: db/changelog/0.0.3/create-email-verification-tokens.sql
+  - include:
+      file: db/changelog/0.0.3/drop-email-unique-constraint.sql
+  - include:
+      file: db/changelog/0.0.4/drop-purchase-related.sql
+  - include:
+      file: db/changelog/0.0.5/refactor-bucket-type-enum.sql

@@ -5,7 +5,6 @@ import com.example.playgame.dto.bucket.BucketResponseDto;
 import com.example.playgame.dto.mapper.BucketDtoMapper;
 import com.example.playgame.entity.Bucket;
 import com.example.playgame.entity.Game;
-import com.example.playgame.entity.enums.BucketType;
 import com.example.playgame.exception.BucketNullException;
 import com.example.playgame.exception.notfound.BucketNotFoundException;
 import com.example.playgame.exception.notfound.GameNotFoundException;
@@ -15,8 +14,6 @@ import com.example.playgame.service.BucketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,14 +43,7 @@ public class BucketServiceImpl implements BucketService {
     @Override
     @Transactional
     public BucketResponseDto getWishlistByAccountId(Long accountId) {
-        Bucket bucket = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.WISHLIST.toString())
-                .orElseThrow(() -> new BucketNotFoundException(accountId));
-        return bucketDtoMapper.bucketToBucketResponseDto(bucket);
-    }
-
-    @Override
-    public BucketResponseDto getBuylistByAccountId(Long accountId) {
-        Bucket bucket = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.BUYLIST.toString())
+        Bucket bucket = bucketRepository.findBucketByAccount_Id(accountId)
                 .orElseThrow(() -> new BucketNotFoundException(accountId));
         return bucketDtoMapper.bucketToBucketResponseDto(bucket);
     }
@@ -66,9 +56,10 @@ public class BucketServiceImpl implements BucketService {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new GameNotFoundException(gameId));
 
-
-        bucket.getGames().add(game);
-        bucketRepository.save(bucket);
+        if (bucket.getGames().stream().noneMatch(g -> g.getId().equals(game.getId()))) {
+            bucket.getGames().add(game);
+            bucketRepository.save(bucket);
+        }
     }
 
     @Override
@@ -81,23 +72,5 @@ public class BucketServiceImpl implements BucketService {
 
         bucket.getGames().remove(game);
         bucketRepository.save(bucket);
-    }
-
-    @Override
-    public void moveGamesToBuyList(Long accountId, List<Long> gameIds) {
-        Bucket wishlist = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.WISHLIST.toString())
-                .orElseThrow(() -> new BucketNotFoundException("Bucket not found"));
-        Bucket buylist = bucketRepository.findByAccountIdAndBucketType(accountId, BucketType.BUYLIST.toString())
-                .orElseThrow(() -> new BucketNotFoundException("Bucket not found"));
-
-        for (Long gameId : gameIds) {
-            Game game = gameRepository.findById(gameId)
-                    .orElseThrow(() -> new IllegalArgumentException("Game not found"));
-            wishlist.getGames().remove(game);
-            buylist.getGames().add(game);
-        }
-
-        bucketRepository.save(wishlist);
-        bucketRepository.save(buylist);
     }
 }

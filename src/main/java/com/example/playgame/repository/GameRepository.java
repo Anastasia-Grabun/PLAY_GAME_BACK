@@ -24,7 +24,7 @@ public interface GameRepository extends JpaRepository<Game, Long> {
 
     Page<Game> findByDeveloperId(Long developerId, Pageable pageable);
 
-    Optional<Game> findByName(String name);
+    Optional<Game> findByNameIgnoreCase(String name);
 
     Page<Game> findAllByOrderByRatingDesc(Pageable pageable);
 
@@ -36,6 +36,8 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     Page<Game> findAllByOrderByPriceAsc(Pageable pageable);
 
     Page<Game> findAllByOrderByPriceDesc(Pageable pageable);
+
+    Page<Game> findAllByOrderByDateDesc(Pageable pageable);
 
     @Query("SELECT g FROM Game g JOIN g.genres genre WHERE genre.id = :genreId")
     Page<Game> findByGenre(Long genreId, Pageable pageable);

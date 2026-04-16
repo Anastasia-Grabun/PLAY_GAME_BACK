@@ -1,10 +1,10 @@
 package com.example.playgame.service;
 
+import com.example.playgame.dto.account.AccountWithIdAndUsernameDto;
 import com.example.playgame.dto.game.GameRequestDto;
 import com.example.playgame.dto.game.GameResponseDto;
 import com.example.playgame.dto.game.GameShortcutResponseDto;
 import com.example.playgame.dto.game.GameUpdateDto;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -36,4 +36,10 @@ public interface GameService {
     void removeGameFromBucket(Long bucketId, Long gameId);
 
     void addRating(Long gameId, Long accountId, BigDecimal rating);
+
+    boolean hasRated(Long gameId, Long accountId);
+
+    List<AccountWithIdAndUsernameDto> getDevelopers();
+
+    List<GameShortcutResponseDto> getNewReleases(int limit);
 }

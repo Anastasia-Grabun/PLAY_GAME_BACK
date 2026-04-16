@@ -1,9 +1,6 @@
 package com.example.playgame.security.config;
 
-import com.example.playgame.entity.Credential;
-import com.example.playgame.exception.notfound.CredentialNotFoundException;
-import com.example.playgame.repository.CredentialRepository;
-import com.example.playgame.security.CustomUserDetails;
+import com.example.playgame.security.CustomUserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,16 +15,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @RequiredArgsConstructor
 public class AppConfig {
-    private final CredentialRepository repository;
+    private final CustomUserServiceImpl customUserService;
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return login -> {
-            Credential credential = repository.findByLogin(login)
-                    .orElseThrow(()-> new CredentialNotFoundException(login));
-
-            return new CustomUserDetails(credential);
-        };
+        return customUserService::loadUserByUsername;
     }
 
     @Bean

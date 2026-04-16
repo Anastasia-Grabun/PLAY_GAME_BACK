@@ -2,7 +2,6 @@ package com.example.playgame.dto.mapper;
 
 import com.example.playgame.dto.bucket.BucketRequestDto;
 import com.example.playgame.dto.bucket.BucketResponseDto;
-import com.example.playgame.dto.bucket.BucketTypeDto;
 import com.example.playgame.entity.Bucket;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
@@ -18,6 +17,4 @@ public interface BucketDtoMapper {
     Bucket bucketRequestDtoToBucket(BucketRequestDto bucketRequestDto);
 
     List<BucketResponseDto> bucketsToBucketResponseDto(List<Bucket> buckets);
-
-    Bucket bucketTypeDtoToBucket(BucketTypeDto bucketTypeDto);
 }

@@ -6,7 +6,7 @@ import com.example.playgame.entity.Game;
 import com.example.playgame.entity.Genre;
 import com.example.playgame.repository.GameRepository;
 import com.example.playgame.repository.GenreRepository;
-import com.example.playgame.repository.PurchaseRepository;
+import com.example.playgame.util.ImageUrlResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -41,10 +40,10 @@ public class RecommendationServiceTest {
     private GenreRepository genreRepository;
 
     @Mock
-    private PurchaseRepository purchaseRepository;
+    private GameDtoMapper gameDtoMapper;
 
     @Mock
-    private GameDtoMapper gameDtoMapper;
+    private ImageUrlResolver imageUrlResolver;
 
     @InjectMocks
     private RecommendationServiceImpl recommendationService;
@@ -72,7 +71,7 @@ public class RecommendationServiceTest {
         when(genreRepository.countFavouriteGenresByAccountId(accountId)).thenReturn(3);
         doNothing().when(favouriteGenresService).updateFavouriteGenres(accountId);
         when(genreRepository.findFavouriteGenresByAccountId(accountId)).thenReturn(Collections.singletonList(1L));
-        when(purchaseRepository.findGameIdsByOwnerId(accountId)).thenReturn(Collections.emptyList());
+        when(imageUrlResolver.resolve(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         Genre genre = new Genre();
         genre.setId(1L);
@@ -100,7 +99,7 @@ public class RecommendationServiceTest {
     @Test
     public void testGetRecommendedGames_NoGenres() {
         when(genreRepository.findFavouriteGenresByAccountId(accountId)).thenReturn(Collections.emptyList());
-        when(purchaseRepository.findGameIdsByOwnerId(accountId)).thenReturn(Collections.emptyList());
+        when(imageUrlResolver.resolve(any())).thenAnswer(invocation -> invocation.getArgument(0));
         Page<Game> fallbackPage = new PageImpl<>(Collections.singletonList(game));
         when(gameRepository.findTopRatedGamesExcluding(any(List.class), any(Pageable.class))).thenReturn(fallbackPage);
         when(gameDtoMapper.gameToGameShortcutResponseDto(game)).thenReturn(gameShortcutResponseDto);
@@ -115,7 +114,7 @@ public class RecommendationServiceTest {
     @Test
     public void testGetRecommendedGames_Success() {
         when(genreRepository.findFavouriteGenresByAccountId(accountId)).thenReturn(Collections.singletonList(1L));
-        when(purchaseRepository.findGameIdsByOwnerId(accountId)).thenReturn(Collections.emptyList());
+        when(imageUrlResolver.resolve(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         Genre genre = new Genre();
         genre.setId(1L);
@@ -136,7 +135,7 @@ public class RecommendationServiceTest {
     @Test
     public void testGetRecommendedGames_GenreQueryReturnsEmpty_UsesFallback() {
         when(genreRepository.findFavouriteGenresByAccountId(accountId)).thenReturn(Collections.singletonList(1L));
-        when(purchaseRepository.findGameIdsByOwnerId(accountId)).thenReturn(Collections.emptyList());
+        when(imageUrlResolver.resolve(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(gameRepository.findRecommendedGamesByGenresPaged(any(), any(), any()))
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
         Page<Game> fallbackPage = new PageImpl<>(Collections.singletonList(game));

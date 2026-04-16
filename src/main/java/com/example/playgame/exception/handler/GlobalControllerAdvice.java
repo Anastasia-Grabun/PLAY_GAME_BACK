@@ -4,6 +4,7 @@ import com.example.playgame.dto.ExceptionDto;
 import com.example.playgame.exception.*;
 import com.example.playgame.exception.notfound.DevelopersGamesNotFoundException;
 import com.example.playgame.exception.notfound.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -14,12 +15,12 @@ import org.springframework.web.server.ResponseStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalControllerAdvice {
-
-    private static final Logger log = LoggerFactory.getLogger(GlobalControllerAdvice.class);
 
     @ExceptionHandler({
             EntityNotFoundException.class,
@@ -34,12 +35,21 @@ public class GlobalControllerAdvice {
         return buildErrorResponse("У вас недостаточно прав для выполнения этой операции.", HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(AuthenticationFailedException.class)
+    public ResponseEntity<ExceptionDto> handleAuthenticationFailed(AuthenticationFailedException ex) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ExceptionDto> handleEmailNotVerified(EmailNotVerifiedException ex) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler({
-            InsufficientFundsException.class,
-            InvalidAmountException.class,
             IllegalArgumentException.class,
             AccountNullException.class,
-            BucketNullException.class
+            BucketNullException.class,
+            InvalidVerificationTokenException.class
     })
     public ResponseEntity<ExceptionDto> handleBadRequest(RuntimeException ex) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -70,6 +80,7 @@ public class GlobalControllerAdvice {
     private ResponseEntity<ExceptionDto> buildErrorResponse(String message, HttpStatus status) {
         ExceptionDto exceptionDto = ExceptionDto.builder()
                 .message(message)
+                .time(ZonedDateTime.now())
                 .build();
         return ResponseEntity.status(status).body(exceptionDto);
     }

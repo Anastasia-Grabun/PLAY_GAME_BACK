@@ -39,8 +39,9 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(request -> request
                 .requestMatchers("/api/v1/authorization/**").permitAll()
+                .requestMatchers("/api/v1/games/demo").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/favicon.ico").permitAll()
+                .requestMatchers("/", "/preview.html", "/css/**", "/js/**", "/uploads/**").permitAll()
                 .anyRequest().authenticated());
 
         // Add JWT filter and authentication

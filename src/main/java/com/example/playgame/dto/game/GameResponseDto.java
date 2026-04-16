@@ -31,6 +31,8 @@ public class GameResponseDto {
     @Size(min = 3, max = 100, message = "Name must be between 3 and 100 characters")
     private String name;
 
+    private String description;
+
     @NotNull(message = "Date cannot be null")
     private Date date;
 
@@ -39,11 +41,13 @@ public class GameResponseDto {
     private BigDecimal price;
 
     @NotNull(message = "Rating cannot be null")
-    @Min(value = 0, message = "Rating must be between 0 and 10")
-    @Max(value = 10, message = "Rating must be between 0 and 10")
+    @Min(value = 0, message = "Rating must be between 0 and 5")
+    @Max(value = 5, message = "Rating must be between 0 and 5")
     private BigDecimal rating;
 
     private List<GenreShortDto> genres;
 
     private AccountWithIdAndUsernameDto developerName;
+
+    private String coverImageUrl;
 }

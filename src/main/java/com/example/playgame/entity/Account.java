@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -33,20 +32,16 @@ public class Account {
     @Column(name = "created_at")
     private Timestamp createdAt;
 
-    @Column(name = "balance")
-    private BigDecimal balance = BigDecimal.ZERO;
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
+    @Column(name = "email_verified_at")
+    private Timestamp emailVerifiedAt;
 
     @OneToOne(mappedBy = "account",
             fetch = FetchType.LAZY,
             cascade = CascadeType.REMOVE)
     private Credential credential;
-
-    @OneToMany(
-            fetch = FetchType.LAZY,
-            mappedBy = "account",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true)
-    private List<Transaction> transactions;
 
     @OneToMany(mappedBy = "account",
             fetch = FetchType.LAZY,
@@ -56,21 +51,7 @@ public class Account {
 
     @OneToMany(
             fetch = FetchType.LAZY,
-            mappedBy = "owner",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true)
-    private List<Purchase> purchases;
-
-    @OneToMany(
-            fetch = FetchType.LAZY,
             mappedBy = "developer"
     )
     private List<Game> games;
-
-    @OneToMany(
-            mappedBy = "account",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true
-    )
-    private List<TopUp> topUps;
 }

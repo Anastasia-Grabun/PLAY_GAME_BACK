@@ -65,25 +65,23 @@ class BucketServiceTest {
 
     @Test
     void testGetById() {
-        when(bucketRepository.existsById(1L)).thenReturn(true);
-        when(bucketRepository.getById(1L)).thenReturn(bucket);
+        when(bucketRepository.findById(1L)).thenReturn(Optional.of(bucket));
         when(bucketDtoMapper.bucketToBucketResponseDto(bucket)).thenReturn(bucketResponseDto);
 
         BucketResponseDto result = bucketService.getById(1L);
 
         assertNotNull(result);
         assertEquals(bucketResponseDto.getId(), result.getId());
-        verify(bucketRepository, times(1)).existsById(1L);
-        verify(bucketRepository, times(1)).getById(1L);
+        verify(bucketRepository, times(1)).findById(1L);
         verify(bucketDtoMapper, times(1)).bucketToBucketResponseDto(bucket);
     }
 
     @Test
     void testGetById_BucketNotFoundException() {
-        when(bucketRepository.existsById(1L)).thenReturn(false);
+        when(bucketRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(BucketNotFoundException.class, () -> bucketService.getById(1L));
-        verify(bucketRepository, times(1)).existsById(1L);
+        verify(bucketRepository, times(1)).findById(1L);
     }
 
     @Test
@@ -104,22 +102,22 @@ class BucketServiceTest {
 
     @Test
     void testGetWishlistByAccountId() {
-        when(bucketRepository.findByAccountIdAndBucketType(1L, "WISHLIST")).thenReturn(Optional.of(bucket));
+        when(bucketRepository.findBucketByAccount_Id(1L)).thenReturn(Optional.of(bucket));
         when(bucketDtoMapper.bucketToBucketResponseDto(bucket)).thenReturn(bucketResponseDto);
 
         BucketResponseDto result = bucketService.getWishlistByAccountId(1L);
 
         assertNotNull(result);
-        verify(bucketRepository, times(1)).findByAccountIdAndBucketType(1L, "WISHLIST");
+        verify(bucketRepository, times(1)).findBucketByAccount_Id(1L);
         verify(bucketDtoMapper, times(1)).bucketToBucketResponseDto(bucket);
     }
 
     @Test
     void testGetWishlistByAccountId_BucketNotFoundException() {
-        when(bucketRepository.findByAccountIdAndBucketType(1L, "WISHLIST")).thenReturn(Optional.empty());
+        when(bucketRepository.findBucketByAccount_Id(1L)).thenReturn(Optional.empty());
 
         assertThrows(BucketNotFoundException.class, () -> bucketService.getWishlistByAccountId(1L));
-        verify(bucketRepository, times(1)).findByAccountIdAndBucketType(1L, "WISHLIST");
+        verify(bucketRepository, times(1)).findBucketByAccount_Id(1L);
     }
 
     @Test
@@ -164,40 +162,5 @@ class BucketServiceTest {
         verify(bucketRepository, times(1)).save(bucket);
 
         assertFalse(bucket.getGames().contains(game));
-    }
-
-
-    @Test
-    void testMoveGamesToBuyList() {
-        List<Game> wishlistGames = new ArrayList<>();
-        wishlistGames.add(game);
-
-        List<Game> buylistGames = new ArrayList<>();
-
-        Bucket wishlist = new Bucket();
-        wishlist.setId(1L);
-        wishlist.setGames(wishlistGames);
-
-        Bucket buylist = new Bucket();
-        buylist.setId(2L);
-        buylist.setGames(buylistGames);
-
-        when(bucketRepository.findByAccountIdAndBucketType(1L, "WISHLIST")).thenReturn(Optional.of(wishlist));
-        when(bucketRepository.findByAccountIdAndBucketType(1L, "BUYLIST")).thenReturn(Optional.of(buylist));
-        when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
-
-        bucketService.moveGamesToBuyList(1L, List.of(1L));
-
-        verify(bucketRepository, times(1)).findByAccountIdAndBucketType(1L, "WISHLIST");
-        verify(bucketRepository, times(1)).findByAccountIdAndBucketType(1L, "BUYLIST");
-        verify(gameRepository, times(1)).findById(1L);
-        verify(bucketRepository, times(2)).save(any(Bucket.class)); // Save both wishlist and buylist
-    }
-
-    @Test
-    void testMoveGamesToBuyList_BucketNotFoundException() {
-        when(bucketRepository.findByAccountIdAndBucketType(1L, "WISHLIST")).thenReturn(Optional.empty());
-
-        assertThrows(BucketNotFoundException.class, () -> bucketService.moveGamesToBuyList(1L, List.of(1L)));
     }
 }

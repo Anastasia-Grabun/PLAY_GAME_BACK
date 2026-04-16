@@ -11,11 +11,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,13 +34,6 @@ public class BucketController {
         return bucketService.getWishlistByAccountId(accountId);
     }
 
-    @GetMapping("/me/buylist")
-    @PreAuthorize("hasRole('USER')")
-    public BucketResponseDto getMyBuylist(@AuthenticationPrincipal UserDetails userDetails) {
-        Long accountId = authService.getAccountIdByLogin(userDetails.getUsername());
-        return bucketService.getBuylistByAccountId(accountId);
-    }
-
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{bucketId}/games/{gameId}")
     public void addGameToBucket(@PathVariable Long bucketId, @PathVariable Long gameId) {
@@ -54,14 +44,5 @@ public class BucketController {
     @DeleteMapping("/{bucketId}/games/{gameId}")
     public void removeGameFromBucket(@PathVariable Long bucketId, @PathVariable Long gameId) {
         bucketService.removeGameFromBucket(bucketId, gameId);
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @PutMapping("/me/move-to-buylist")
-    public void moveGamesToBuyList(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody List<Long> gameIds) {
-        Long accountId = authService.getAccountIdByLogin(userDetails.getUsername());
-        bucketService.moveGamesToBuyList(accountId, gameIds);
     }
 }

@@ -1,6 +1,6 @@
 package com.example.playgame.security;
 
-import com.example.playgame.exception.notfound.CredentialNotFoundException;
+import com.example.playgame.exception.AuthenticationFailedException;
 import com.example.playgame.repository.CredentialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,6 +17,6 @@ public class CustomUserServiceImpl implements UserDetailsService {
     @Transactional
     public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return credentialRepository.findByLogin(username).map(CustomUserDetails::new)
-                .orElseThrow(()-> new CredentialNotFoundException(username));
+                .orElseThrow(() -> new AuthenticationFailedException("Такого аккаунта не найдено"));
     }
 }

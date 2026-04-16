@@ -15,6 +15,8 @@ import java.util.List;
 public interface GameDtoMapper {
     GameDtoMapper INSTANCE = Mappers.getMapper(GameDtoMapper.class);
 
+    @Mapping(target = "coverImageUrl", source = "coverImageUrl")
+    @Mapping(target = "description", source = "description")
     @Mapping(target = "genres", expression = "java(game.getGenres() != null ? game.getGenres().stream().map(g -> new com.example.playgame.dto.genre.GenreShortDto(g.getId(), g.getName())).collect(java.util.stream.Collectors.toList()) : java.util.Collections.<com.example.playgame.dto.genre.GenreShortDto>emptyList())")
     @Mapping(target = "developerName", expression = "java(game.getDeveloper() != null ? new com.example.playgame.dto.account.AccountWithIdAndUsernameDto(game.getDeveloper().getId(), game.getDeveloper().getUsername()) : null)")
     GameResponseDto gameToGameResponseDto(Game game);

@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Optional;
 import static org.junit.Assert.assertEquals;
@@ -48,7 +47,6 @@ class AccountServiceTest {
         account.setId(1L);
         account.setUsername("testuser");
         account.setEmail("testuser@example.com");
-        account.setBalance(BigDecimal.valueOf(100.00));
         account.setCreatedAt(new Timestamp(System.currentTimeMillis()));
 
         accountRequestDto = new AccountRequestDto();
@@ -189,59 +187,5 @@ class AccountServiceTest {
         when(accountRepository.findByCredential_Login("unknown")).thenReturn(Optional.empty());
 
         assertThrows(AccountNotFoundException.class, () -> accountService.updateByLogin("unknown", accountUpdateDto));
-    }
-
-    @Test
-    void testGetBalanceByLogin() {
-        when(accountRepository.findByCredential_Login("testuser")).thenReturn(Optional.of(account));
-
-        BigDecimal balance = accountService.getBalanceByLogin("testuser");
-
-        assertNotNull(balance);
-        assertEquals(account.getBalance(), balance);
-        verify(accountRepository, times(1)).findByCredential_Login("testuser");
-    }
-
-    @Test
-    void testGetBalanceByLogin_AccountNotFound() {
-        when(accountRepository.findByCredential_Login("unknown")).thenReturn(Optional.empty());
-
-        assertThrows(AccountNotFoundException.class, () -> accountService.getBalanceByLogin("unknown"));
-    }
-
-    @Test
-    void testCheckBalance() {
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
-
-        BigDecimal balance = accountService.checkBalance(1L);
-
-        assertNotNull(balance);
-        assertEquals(account.getBalance(), balance);
-    }
-
-    @Test
-    void testCheckBalance_AccountNotFoundException() {
-        when(accountRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(AccountNotFoundException.class, () -> accountService.checkBalance(1L));
-    }
-
-    @Test
-    void testUpdateBalance() {
-        BigDecimal newBalance = BigDecimal.valueOf(200.00);
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
-
-        accountService.updateBalance(1L, newBalance);
-
-        assertEquals(newBalance, account.getBalance());
-        verify(accountRepository, times(1)).save(account);
-    }
-
-    @Test
-    void testUpdateBalance_AccountNotFoundException() {
-        when(accountRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(AccountNotFoundException.class,
-                () -> accountService.updateBalance(1L, BigDecimal.valueOf(200.00)));
     }
 }

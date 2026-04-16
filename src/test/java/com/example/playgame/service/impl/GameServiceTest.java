@@ -1,5 +1,6 @@
 package com.example.playgame.service.impl;
 
+import com.example.playgame.dto.account.AccountWithIdAndUsernameDto;
 import com.example.playgame.dto.game.GameRequestDto;
 import com.example.playgame.dto.game.GameResponseDto;
 import com.example.playgame.dto.game.GameShortcutResponseDto;
@@ -77,6 +78,8 @@ public class GameServiceTest {
         gameResponseDto.setName("Test Game");
         gameResponseDto.setPrice(BigDecimal.valueOf(59.99));
         gameResponseDto.setRating(BigDecimal.valueOf(4.5));
+        gameResponseDto.setGenres(Collections.emptyList());
+        gameResponseDto.setDeveloperName(new AccountWithIdAndUsernameDto(1L, "devUser"));
 
         gameUpdateDto = new GameUpdateDto();
         gameUpdateDto.setId(1L);
@@ -177,7 +180,7 @@ public class GameServiceTest {
 
     @Test
     public void testFindGameByName_Success() {
-        when(gameRepository.findByName("Test Game")).thenReturn(Optional.of(game));
+        when(gameRepository.findByNameIgnoreCase("Test Game")).thenReturn(Optional.of(game));
         when(gameDtoMapper.gameToGameShortcutResponseDto(game)).thenReturn(new GameShortcutResponseDto());
 
         GameShortcutResponseDto result = gameService.findGameByName("Test Game");
@@ -187,7 +190,7 @@ public class GameServiceTest {
 
     @Test
     public void testFindGameByName_NotFound() {
-        when(gameRepository.findByName("Test Game")).thenReturn(Optional.empty());
+        when(gameRepository.findByNameIgnoreCase("Test Game")).thenReturn(Optional.empty());
 
         assertThrows(GameNotFoundException.class, () -> gameService.findGameByName("Test Game"));
     }

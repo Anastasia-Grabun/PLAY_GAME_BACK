@@ -3,8 +3,6 @@ package com.example.playgame.service;
 import com.example.playgame.dto.bucket.BucketRequestDto;
 import com.example.playgame.dto.bucket.BucketResponseDto;
 
-import java.util.List;
-
 public interface BucketService {
     BucketResponseDto getById(Long id);
 
@@ -12,11 +10,7 @@ public interface BucketService {
 
     BucketResponseDto getWishlistByAccountId(Long accountId);
 
-    BucketResponseDto getBuylistByAccountId(Long accountId);
-
     void addGameToBucket(Long bucketId, Long gameId);
 
     void removeGameFromBucket(Long bucketId, Long gameId);
-
-    void moveGamesToBuyList(Long accountId, List<Long> gameIds);
 }

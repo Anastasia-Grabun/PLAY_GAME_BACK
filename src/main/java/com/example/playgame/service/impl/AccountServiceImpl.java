@@ -13,8 +13,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
@@ -71,28 +69,5 @@ public class AccountServiceImpl implements AccountService {
         account.setEmail(accountDto.getEmail());
         accountRepository.save(account);
         return accountDtoMapper.accountToAccountResponseDto(account);
-    }
-
-    @Override
-    public BigDecimal getBalanceByLogin(String login) {
-        Account account = accountRepository.findByCredential_Login(login)
-                .orElseThrow(() -> new AccountNotFoundException("Credential login: " + login));
-        return account.getBalance();
-    }
-
-    @Override
-    public BigDecimal checkBalance(Long accountId) {
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new AccountNotFoundException(accountId));
-        return account.getBalance();
-    }
-
-    @Override
-    @Transactional
-    public void updateBalance(Long accountId, BigDecimal newBalance) {
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new AccountNotFoundException(accountId));
-        account.setBalance(newBalance);
-        accountRepository.save(account);
     }
 }

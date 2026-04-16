@@ -32,40 +32,46 @@ public class JwtFilter extends OncePerRequestFilter {
             @NotNull HttpServletResponse response,
             @NotNull FilterChain filterChain) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String login;
 
         if(authHeader == null || !authHeader.startsWith("Bearer ")){
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
-        login = jwtService.extractLogin(jwt);
-
-        if(login != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            UserDetails userDetails = this.customUserService.loadUserByUsername(login);
-
-            List<SimpleGrantedAuthority> authorities = userDetails.getAuthorities().stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                    .toList();
-
-            if(jwtService.isTokenValid(jwt, userDetails)){
-
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        authorities
-                );
-
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-
+        final String jwt = authHeader.substring(7).trim();
+        if (jwt.isEmpty() || "null".equalsIgnoreCase(jwt) || "undefined".equalsIgnoreCase(jwt)) {
             filterChain.doFilter(request, response);
+            return;
         }
+
+        try {
+            final String login = jwtService.extractLogin(jwt);
+            if(login != null && SecurityContextHolder.getContext().getAuthentication() == null){
+                UserDetails userDetails = this.customUserService.loadUserByUsername(login);
+
+                List<SimpleGrantedAuthority> authorities = userDetails.getAuthorities().stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                        .toList();
+
+                if(jwtService.isTokenValid(jwt, userDetails)){
+
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            authorities
+                    );
+
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+        } catch (Exception ignored) {
+            // Invalid/expired/malformed token should not break public endpoints.
+        }
+
+        filterChain.doFilter(request, response);
     }
 }

@@ -19,8 +19,6 @@ public interface AccountDtoMapper {
 
     List<AccountShortcutResponseDto> accountsToAccountShortcutResponseDtos(List<Account> accounts);
 
-    Account accountRequestToBuyDtoToAccount(AccountRequestToBuyDto accountRequestToBuyDto);
-
     Account accountWithIdAndUsernameDtoToAccount(AccountWithIdAndUsernameDto account);
 }
 

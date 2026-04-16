@@ -1,6 +1,7 @@
 package com.example.playgame.exception.notfound;
 
 public class CredentialNotFoundException extends EntityNotFoundException {
+
     private static final String EXCEPTION_EXTENSION_DEFINITION = "Credential";
 
     public CredentialNotFoundException(Long id) {

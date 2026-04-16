@@ -13,6 +13,24 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: anastasiamoon109@gmail.com
+    password: "tglknqhkggrfqxds"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  api-base-url: http://localhost:8080  # Для деплоя: https://api.yoursite.com
+  email-verification:
+    send-enabled: true
+    from: anastasiamoon109@gmail.com
+    token-ttl-minutes: 30
 
 jwt:
   secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
