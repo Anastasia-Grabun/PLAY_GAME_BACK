@@ -19,6 +19,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -60,7 +61,15 @@ public class Game{
             joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
-    private List<Genre> genres;
+    private Set<Genre> genres;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "games_tags",
+            joinColumns = @JoinColumn(name = "game_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> tags;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "games")
     private List<Bucket> buckets;

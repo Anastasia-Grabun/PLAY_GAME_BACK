@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "genres")
@@ -36,5 +37,5 @@ public class Genre{
             joinColumns = @JoinColumn(name = "genre_id"),
             inverseJoinColumns = @JoinColumn(name = "game_id")
     )
-    private List<Game> games;
+    private Set<Game> games;
 }
